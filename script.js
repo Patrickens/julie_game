@@ -17,7 +17,7 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 // ==== Game variables ====
-const riverHeight = canvas.height * 0.3; // River takes up 30% of the screen
+// Remove the fixed river height since it will now extend from path to top
 const pathHeight = canvas.height * 0.4; // Path takes up 40% of the screen
 const treesHeight = canvas.height * 0.3; // Trees take up 30% of the screen
 
@@ -25,6 +25,8 @@ const treesHeight = canvas.height * 0.3; // Trees take up 30% of the screen
 let waveOffset1 = 0;
 let waveOffset2 = 0;
 let waveOffset3 = 0;
+let waveOffset4 = 0;
+let waveOffset5 = 0;
 const waveSpeed = 0.05;
 const waveHeight = 8;
 const waveFrequency = 0.015;
@@ -32,7 +34,7 @@ const waveFrequency = 0.015;
 // Character properties
 const character = {
   x: canvas.width * 0.05,
-  y: riverHeight + pathHeight * 0.5, // Start in the middle of the path
+  y: canvas.height * 0.5, // Start in the middle of the screen
   radius: 15,
   color: "#FFD700",
   speed: 0,
@@ -165,7 +167,7 @@ function drawRiver() {
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo(canvas.width, 0);
-  ctx.lineTo(canvas.width, riverHeight);
+  ctx.lineTo(canvas.width, canvas.height);
   
   // Draw the curved bottom of the river following the path
   for (let x = canvas.width; x >= 0; x -= 5) {
@@ -176,20 +178,20 @@ function drawRiver() {
   ctx.closePath();
   ctx.fill();
 
-  // Draw three sets of waves at different heights
-  const waveColors = ["#4A90E2", "#357ABD", "#2E5C8A"];
-  const waveOffsets = [waveOffset1, waveOffset2, waveOffset3];
-  const waveHeights = [0.2, 0.5, 0.8]; // Relative positions in the water
+  // Draw five sets of waves at different heights
+  const waveColors = ["#4A90E2", "#357ABD", "#2E5C8A", "#4A90E2", "#357ABD"];
+  const waveOffsets = [waveOffset1, waveOffset2, waveOffset3, waveOffset4, waveOffset5];
+  const waveHeights = [0.1, 0.25, 0.4, 0.55, 0.7]; // Adjusted to be more concentrated at the top
 
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     ctx.strokeStyle = waveColors[i];
     ctx.lineWidth = 2;
     ctx.beginPath();
     
     for (let x = 0; x < canvas.width; x += 5) {
-      const baseY = getPathY(x);
-      const waterHeight = riverHeight - baseY;
-      const waveY = baseY + waterHeight * waveHeights[i];
+      const pathY = getPathY(x);
+      const waterHeight = pathY; // Height from top to path
+      const waveY = waterHeight * waveHeights[i]; // Start from top
       const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
       
       if (x === 0) {
@@ -204,9 +206,9 @@ function drawRiver() {
     ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
     ctx.beginPath();
     for (let x = 0; x < canvas.width; x += 5) {
-      const baseY = getPathY(x);
-      const waterHeight = riverHeight - baseY;
-      const waveY = baseY + waterHeight * waveHeights[i];
+      const pathY = getPathY(x);
+      const waterHeight = pathY; // Height from top to path
+      const waveY = waterHeight * waveHeights[i]; // Start from top
       const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
       
       if (x === 0) {
@@ -215,17 +217,19 @@ function drawRiver() {
         ctx.lineTo(x, y);
       }
     }
-    // Close the path to the bottom
-    ctx.lineTo(canvas.width, riverHeight);
-    ctx.lineTo(0, riverHeight);
+    // Close the path to the top
+    ctx.lineTo(canvas.width, 0);
+    ctx.lineTo(0, 0);
     ctx.closePath();
     ctx.fill();
   }
   
-  // Update wave offsets
+  // Update wave offsets with different speeds for more dynamic movement
   waveOffset1 += waveSpeed;
-  waveOffset2 += waveSpeed * 1.2; // Slightly different speeds
+  waveOffset2 += waveSpeed * 1.2;
   waveOffset3 += waveSpeed * 0.8;
+  waveOffset4 += waveSpeed * 1.1;
+  waveOffset5 += waveSpeed * 0.9;
 }
 
 function drawPath() {
@@ -246,7 +250,7 @@ function drawPath() {
 
 function getPathY(x) {
   // Create a winding path using sine waves
-  return riverHeight + pathHeight * 0.5 + Math.sin(x * 0.005) * 50;
+  return canvas.height * 0.5 + pathHeight * 0.5 + Math.sin(x * 0.005) * 50;
 }
 
 function drawTrees() {
