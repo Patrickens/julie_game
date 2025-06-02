@@ -38,30 +38,99 @@ const waveSpeed = 0.05;
 const waveHeight = 8;
 const waveFrequency = 0.015;
 
-// Character properties
+// Add character image
+const characterImage = new Image();
+characterImage.src = 'Julie_char.png';
+
+// Add sparkle properties
+const sparkles = [];
+function generateSparkles() {
+  sparkles.length = 0;
+  for (let i = 0; i < 10; i++) {
+    sparkles.push({
+      x: 0,
+      y: 0,
+      size: 3 + Math.random() * 4,
+      angle: Math.random() * Math.PI * 2,
+      speed: 0.5 + Math.random() * 1,
+      opacity: 0.3 + Math.random() * 0.7
+    });
+  }
+}
+
+function updateSparkles() {
+  sparkles.forEach(sparkle => {
+    sparkle.angle += 0.1;
+    sparkle.x = Math.cos(sparkle.angle) * 20;
+    sparkle.y = Math.sin(sparkle.angle) * 20 - 30;
+  });
+}
+
+function drawSparkles() {
+  sparkles.forEach(sparkle => {
+    ctx.save();
+    ctx.translate(character.x, character.y);
+    ctx.fillStyle = `rgba(255, 192, 203, ${sparkle.opacity})`; // Pink with varying opacity
+    ctx.beginPath();
+    ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// Update character properties
 const character = {
   x: canvas.width * 0.05,
-  y: canvas.height * 0.5, // Start in the middle of the screen
-  radius: 15,
-  color: "#FFD700",
-  stepSize: 100, // Reverted back to original step size
-  hairWave: 0 // For hair animation
+  y: canvas.height * 0.5,
+  width: 160,
+  height: 240,
+  stepSize: 173,
+  hairWave: 0
 };
 
 // Define four event spots along the winding path
 let eventSpots = [];
 function resetEventSpots() {
   eventSpots = [];
-  for (let i = 1; i <= 4; i++) {
-    const x = canvas.width * (i * 0.2);
-    const y = getPathY(x);
-    eventSpots.push({
-      x: x,
-      y: y,
-      triggered: false,
-      message: `You've reached event #${i}!`,
-    });
-  }
+  // First event after 3 steps (300 pixels) plus extra distance
+  const event1X = canvas.width * 0.05 + 350; // Increased from 300 to 400
+  const event1Y = getPathY(event1X);
+  eventSpots.push({
+    x: event1X,
+    y: event1Y,
+    triggered: false,
+    message: "You've reached event #1!"
+  });
+
+  // Second event
+  const event2X = event1X + 500;
+  const event2Y = getPathY(event2X);
+  eventSpots.push({
+    x: event2X,
+    y: event2Y,
+    triggered: false,
+    message: "You've reached event #2!"
+  });
+
+  // Third event
+  const event3X = event2X + 500;
+  const event3Y = getPathY(event3X);
+  eventSpots.push({
+    x: event3X,
+    y: event3Y,
+    triggered: false,
+    message: "You've reached event #3!"
+  });
+
+  // Fourth event
+  const event4X = event3X + 500;
+  const event4Y = getPathY(event4X);
+  eventSpots.push({
+    x: event4X,
+    y: event4Y,
+    triggered: false,
+    message: "You've reached event #4!"
+  });
 }
 
 // Input state
@@ -328,54 +397,24 @@ function drawTrees() {
   });
 }
 
-function drawEventSpots() {
-  eventSpots.forEach((spot) => {
-    ctx.fillStyle = "#8B0000";
-    ctx.beginPath();
-    ctx.arc(spot.x, spot.y, 8, 0, Math.PI * 2);
-    ctx.fill();
-  });
-}
-
 function drawCharacter() {
-  // Save the current context state
+  // Draw character image
   ctx.save();
-  
-  // Move to character's position
   ctx.translate(character.x, character.y);
   
-  // Draw the hair (long flowing hair)
-  ctx.fillStyle = "#D4AF37"; // Golden blonde color
-  ctx.beginPath();
-  // Main hair body with wave effect
-  ctx.ellipse(0, 0, 20, 25, Math.sin(character.hairWave) * 0.2, 0, Math.PI * 2);
-  ctx.fill();
+  // Draw the image centered
+  ctx.drawImage(
+    characterImage,
+    -character.width/2,
+    -character.height/2,
+    character.width,
+    character.height
+  );
   
-  // Draw hair details (some strands with wave effect)
-  ctx.strokeStyle = "#B8860B"; // Darker blonde for strands
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 5; i++) {
-    const angle = (i * Math.PI / 2.5) - Math.PI / 2;
-    const waveOffset = Math.sin(character.hairWave + i) * 5;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(
-      Math.cos(angle) * 15 + waveOffset,
-      Math.sin(angle) * 15,
-      Math.cos(angle) * 25 + waveOffset * 1.5,
-      Math.sin(angle) * 25
-    );
-    ctx.stroke();
-  }
-  
-  // Draw the head (smaller circle on top)
-  ctx.fillStyle = "#D4AF37"; // Same color as hair
-  ctx.beginPath();
-  ctx.arc(0, -10, 8, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Restore the context state
   ctx.restore();
+  
+  // Draw sparkles
+  drawSparkles();
 }
 
 function showEvent() {
@@ -417,7 +456,7 @@ function moveCharacter() {
   character.y = getPathY(character.x);
   
   // If character reaches the end, show final event
-  if (character.x > canvas.width - character.radius) {
+  if (character.x > canvas.width - character.width) {
     showFinalEvent();
     // Disable movement after reaching the end
     btnMove.disabled = true;
@@ -853,8 +892,8 @@ function checkForEvents() {
     const spot = eventSpots[i];
     // Increased trigger radius for better detection
     if (!spot.triggered && 
-        Math.abs(character.x - spot.x) < character.radius + 50 &&
-        Math.abs(character.y - spot.y) < character.radius + 50) {
+        Math.abs(character.x - spot.x) < character.width &&
+        Math.abs(character.y - spot.y) < character.height) {
       console.log("Event triggered:", i, "at position:", character.x, character.y);
       spot.triggered = true;
       if (i === 0) { // First event - tarot cards
@@ -882,10 +921,10 @@ function gameLoop() {
   clearCanvas();
   drawRiver();
   drawPath();
-  drawShrubs(); // Add shrubs before trees
+  drawShrubs();
   drawTrees();
-  drawEventSpots();
   updateCharacterPosition();
+  updateSparkles();
   drawCharacter();
   updateDog();
   drawDog();
@@ -977,3 +1016,6 @@ window.addEventListener("resize", () => {
 
 // Generate initial shrubs
 generateShrubs();
+
+// Generate initial sparkles
+generateSparkles();
