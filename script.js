@@ -2,11 +2,13 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-const btnLeft = document.getElementById("btnLeft");
-const btnRight = document.getElementById("btnRight");
-const eventOverlay = document.getElementById("eventOverlay");
-const eventText = document.getElementById("eventText");
-const btnContinue = document.getElementById("btnContinue");
+const btnMove = document.getElementById("btnMove"); // Single movement button
+
+// Add debug logging
+console.log("Game elements initialized:", {
+  canvas: canvas,
+  btnMove: btnMove
+});
 
 // Adjust canvas size to fill the viewport (minus controls)
 function resizeCanvas() {
@@ -45,21 +47,22 @@ const character = {
 
 // Define four event spots along the winding path
 let eventSpots = [];
-for (let i = 1; i <= 4; i++) {
-  const x = canvas.width * (i * 0.2);
-  const y = getPathY(x);
-  eventSpots.push({
-    x: x,
-    y: y,
-    triggered: false,
-    message: `You've reached event #${i}!`,
-  });
+function resetEventSpots() {
+  eventSpots = [];
+  for (let i = 1; i <= 4; i++) {
+    const x = canvas.width * (i * 0.2);
+    const y = getPathY(x);
+    eventSpots.push({
+      x: x,
+      y: y,
+      triggered: false,
+      message: `You've reached event #${i}!`,
+    });
+  }
 }
 
 // Input state
-let movingLeft = false;
-let movingRight = false;
-let gamePaused = false;
+let isMoving = false;
 
 // Tree types with different properties
 const treeTypes = [
@@ -128,36 +131,26 @@ window.addEventListener("resize", () => {
 generateTrees();
 
 // ==== Input Handlers ====
-// When touch (or mouse) starts on the left/right button, move character
-btnLeft.addEventListener("touchstart", (e) => {
+// When touch (or mouse) starts on the move button, move character
+btnMove.addEventListener("touchstart", (e) => {
   e.preventDefault();
-  movingLeft = true;
+  isMoving = true;
+  console.log("Touch start - isMoving:", isMoving);
 });
-btnLeft.addEventListener("touchend", (e) => {
+btnMove.addEventListener("touchend", (e) => {
   e.preventDefault();
-  movingLeft = false;
-});
-btnRight.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  movingRight = true;
-});
-btnRight.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  movingRight = false;
+  isMoving = false;
+  console.log("Touch end - isMoving:", isMoving);
 });
 
-// For desktop testing: also listen to mousedown/mouseup (optional)
-btnLeft.addEventListener("mousedown", () => (movingLeft = true));
-btnLeft.addEventListener("mouseup", () => (movingLeft = false));
-btnRight.addEventListener("mousedown", () => (movingRight = true));
-btnRight.addEventListener("mouseup", () => (movingRight = false));
-
-// Continue button in overlay
-btnContinue.addEventListener("click", () => {
-  eventOverlay.classList.add("hidden");
-  gamePaused = false;
-  // Reset character position slightly to prevent immediate re-triggering
-  character.x += 10;
+// For desktop testing: also listen to mousedown/mouseup
+btnMove.addEventListener("mousedown", () => {
+  isMoving = true;
+  console.log("Mouse down - isMoving:", isMoving);
+});
+btnMove.addEventListener("mouseup", () => {
+  isMoving = false;
+  console.log("Mouse up - isMoving:", isMoving);
 });
 
 // ==== Game Loop & Drawing ====
@@ -338,10 +331,14 @@ function drawCharacter() {
   ctx.restore();
 }
 
+function resetGame() {
+  character.x = canvas.width * 0.05;
+  character.y = getPathY(character.x);
+  resetEventSpots();
+}
+
 function updateCharacterPosition() {
-  if (movingLeft) {
-    character.speed = -character.maxSpeed;
-  } else if (movingRight) {
+  if (isMoving) {
     character.speed = character.maxSpeed;
   } else {
     character.speed = 0;
@@ -353,29 +350,19 @@ function updateCharacterPosition() {
   // Update hair wave animation
   character.hairWave += 0.1;
   
-  // Boundaries
-  if (character.x < character.radius) character.x = character.radius;
-  if (character.x > canvas.width - character.radius) character.x = canvas.width - character.radius;
-}
-
-function showEvent(msg) {
-  if (!gamePaused) {  // Only show if not already paused
-    gamePaused = true;
-    eventText.textContent = msg;
-    eventOverlay.classList.remove("hidden");
+  // If character reaches the end, reset the game
+  if (character.x > canvas.width - character.radius) {
+    resetGame();
   }
 }
 
 function checkForEvents() {
-  if (!gamePaused) {  // Only check for events if game is not paused
-    for (let spot of eventSpots) {
-      if (!spot.triggered && 
-          Math.abs(character.x - spot.x) < character.radius + 5 &&
-          Math.abs(character.y - spot.y) < character.radius + 5) {
-        spot.triggered = true;
-        showEvent(spot.message);
-        break;
-      }
+  for (let spot of eventSpots) {
+    if (!spot.triggered && 
+        Math.abs(character.x - spot.x) < character.radius + 5 &&
+        Math.abs(character.y - spot.y) < character.radius + 5) {
+      spot.triggered = true;
+      break;
     }
   }
 }
@@ -385,18 +372,20 @@ function clearCanvas() {
 }
 
 function gameLoop() {
-  if (!gamePaused) {
-    clearCanvas();
-    drawRiver();
-    drawPath();
-    drawTrees();
-    drawEventSpots();
-    updateCharacterPosition();
-    drawCharacter();
-    checkForEvents();
-  }
+  clearCanvas();
+  drawRiver();
+  drawPath();
+  drawTrees();
+  drawEventSpots();
+  updateCharacterPosition();
+  drawCharacter();
+  checkForEvents();
   requestAnimationFrame(gameLoop);
 }
 
+// Initialize the game
+console.log("Initializing game...");
+resetGame();
 // Start the loop
+console.log("Starting game loop...");
 requestAnimationFrame(gameLoop);
