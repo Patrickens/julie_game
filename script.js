@@ -374,8 +374,9 @@ function moveCharacter() {
   
   // If character reaches the end, show final event
   if (character.x > canvas.width - character.radius) {
-    // TODO: Show final event GIF
-    resetGame();
+    showFinalEvent();
+    // Disable movement after reaching the end
+    btnMove.disabled = true;
   }
 }
 
@@ -794,13 +795,13 @@ function showTreeHugEvent() {
   // Add to document
   document.body.appendChild(overlay);
 
-  // Hide after GIF duration (assuming 3 seconds)
+  // Hide after 10 seconds and enable movement
   setTimeout(() => {
     overlay.remove();
     // Enable movement for final path
     buttonPressesRemaining = 5;
     btnMove.disabled = false;
-  }, 3000);
+  }, 10000);
 }
 
 function checkForEvents() {
@@ -856,3 +857,51 @@ resetGame();
 // Start the loop
 console.log("Starting game loop...");
 requestAnimationFrame(gameLoop);
+
+// Add final event function
+function showFinalEvent() {
+  let gifCount = 0;
+  const maxGifs = 3;
+  
+  function showNextGif() {
+    if (gifCount >= maxGifs) {
+      // Game is complete
+      console.log("Game completed!");
+      return;
+    }
+
+    // Create and show the overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'finalEventOverlay';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    overlay.style.display = 'flex';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.zIndex = '100';
+
+    // Create and add the GIF
+    const gif = document.createElement('img');
+    gif.src = 'happy_birthday.gif';
+    gif.style.maxWidth = '80%';
+    gif.style.maxHeight = '80%';
+    overlay.appendChild(gif);
+
+    // Add to document
+    document.body.appendChild(overlay);
+
+    // Hide after GIF duration (assuming 3 seconds) and show next one
+    setTimeout(() => {
+      overlay.remove();
+      gifCount++;
+      showNextGif();
+    }, 3000);
+  }
+
+  // Start showing GIFs
+  showNextGif();
+}
