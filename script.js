@@ -3,11 +3,16 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 const btnMove = document.getElementById("btnMove"); // Single movement button
+const eventOverlay = document.getElementById("eventOverlay");
+
+// Ensure overlay is hidden at startup
+eventOverlay.classList.add("hidden");
 
 // Add debug logging
 console.log("Game elements initialized:", {
   canvas: canvas,
-  btnMove: btnMove
+  btnMove: btnMove,
+  eventOverlay: eventOverlay
 });
 
 // Adjust canvas size to fill the viewport (minus controls)
@@ -137,6 +142,7 @@ btnMove.addEventListener("touchstart", (e) => {
   isMoving = true;
   console.log("Touch start - isMoving:", isMoving);
 });
+
 btnMove.addEventListener("touchend", (e) => {
   e.preventDefault();
   isMoving = false;
@@ -148,9 +154,16 @@ btnMove.addEventListener("mousedown", () => {
   isMoving = true;
   console.log("Mouse down - isMoving:", isMoving);
 });
+
 btnMove.addEventListener("mouseup", () => {
   isMoving = false;
   console.log("Mouse up - isMoving:", isMoving);
+});
+
+// Also handle mouse leaving the button while pressed
+btnMove.addEventListener("mouseleave", () => {
+  isMoving = false;
+  console.log("Mouse leave - isMoving:", isMoving);
 });
 
 // ==== Game Loop & Drawing ====
@@ -331,10 +344,34 @@ function drawCharacter() {
   ctx.restore();
 }
 
+function showEvent() {
+  eventOverlay.classList.remove("hidden");
+  
+  // Add click handlers for cards
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      card.classList.add('flipped');
+      
+      // Check if all cards are flipped
+      const allFlipped = Array.from(cards).every(c => c.classList.contains('flipped'));
+      if (allFlipped) {
+        // Hide the overlay after all cards are flipped
+        setTimeout(() => {
+          eventOverlay.classList.add("hidden");
+          // Reset cards for next time
+          cards.forEach(c => c.classList.remove('flipped'));
+        }, 2000);
+      }
+    });
+  });
+}
+
 function resetGame() {
   character.x = canvas.width * 0.05;
   character.y = getPathY(character.x);
   resetEventSpots();
+  eventOverlay.classList.add("hidden");
 }
 
 function updateCharacterPosition() {
@@ -344,8 +381,11 @@ function updateCharacterPosition() {
     character.speed = 0;
   }
   
-  character.x += character.speed;
-  character.y = getPathY(character.x);
+  // Only update position if speed is not 0
+  if (character.speed > 0) {
+    character.x += character.speed;
+    character.y = getPathY(character.x);
+  }
   
   // Update hair wave animation
   character.hairWave += 0.1;
@@ -357,11 +397,15 @@ function updateCharacterPosition() {
 }
 
 function checkForEvents() {
-  for (let spot of eventSpots) {
+  for (let i = 0; i < eventSpots.length; i++) {
+    const spot = eventSpots[i];
     if (!spot.triggered && 
         Math.abs(character.x - spot.x) < character.radius + 5 &&
         Math.abs(character.y - spot.y) < character.radius + 5) {
       spot.triggered = true;
+      if (i === 0) { // Only show tarot cards for the first event spot
+        showEvent();
+      }
       break;
     }
   }

@@ -55,10 +55,105 @@
     background-color: #ffffff99;
   }
   
+  /* Overlay covering the entire screen */
+  #eventOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  
+  /* Hide when not in use */
+  .hidden {
+    display: none !important;
+  }
+  
+  /* Tarot cards container */
+  .tarot-cards {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    padding: 20px;
+  }
+  
+  /* Individual card styling */
+  .card {
+    width: 200px;
+    height: 350px;
+    perspective: 1000px;
+    cursor: pointer;
+  }
+  
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+  }
+  
+  .card.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+  
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .card-front {
+    background: linear-gradient(45deg, #2c3e50, #3498db);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .card-front::after {
+    content: "Tarot";
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .card-back {
+    transform: rotateY(180deg);
+    background: white;
+    padding: 10px;
+  }
+  
+  .card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
   /* Media queries for different screen sizes */
   @media (max-width: 768px) {
     #controls button {
       font-size: 1.5rem;
+    }
+
+    .card {
+      width: 150px;
+      height: 262px;
+    }
+
+    .tarot-cards {
+      gap: 10px;
     }
   }
   
