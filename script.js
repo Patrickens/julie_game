@@ -134,10 +134,13 @@ window.addEventListener("resize", () => {
 generateTrees();
 
 // ==== Input Handlers ====
+// Add event state tracking
+let isEvent3Active = false;
+
 // When touch (or mouse) starts on the move button, move character
 btnMove.addEventListener("touchstart", (e) => {
   e.preventDefault();
-  if (buttonPressesRemaining > 0) {
+  if (buttonPressesRemaining > 0 && !isEvent3Active) {
     moveCharacter();
     buttonPressesRemaining--;
     console.log("Touch start - Presses remaining:", buttonPressesRemaining);
@@ -146,7 +149,7 @@ btnMove.addEventListener("touchstart", (e) => {
 
 // For desktop testing: also listen to mousedown
 btnMove.addEventListener("mousedown", () => {
-  if (buttonPressesRemaining > 0) {
+  if (buttonPressesRemaining > 0 && !isEvent3Active) {
     moveCharacter();
     buttonPressesRemaining--;
     console.log("Mouse down - Presses remaining:", buttonPressesRemaining);
@@ -704,6 +707,10 @@ function showCupAndBookEvent() {
   book.isVisible = true;
   book.hasDrawing = false;
   hand.isVisible = true;
+  isEvent3Active = true;
+  
+  // Disable move button
+  btnMove.disabled = true;
   
   // Add click handlers
   canvas.addEventListener('click', handleCupAndBookClick);
@@ -737,6 +744,9 @@ function handleCupAndBookClick(event) {
       canvas.removeEventListener('click', handleCupAndBookClick);
       // Reset button presses for next event
       buttonPressesRemaining = 3;
+      // Re-enable move button
+      btnMove.disabled = false;
+      isEvent3Active = false;
     }, 500);
   }
 }
