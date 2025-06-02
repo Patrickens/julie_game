@@ -1,0 +1,398 @@
+// ==== Global setup ====
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const btnLeft = document.getElementById("btnLeft");
+const btnRight = document.getElementById("btnRight");
+const eventOverlay = document.getElementById("eventOverlay");
+const eventText = document.getElementById("eventText");
+const btnContinue = document.getElementById("btnContinue");
+
+// Adjust canvas size to fill the viewport (minus controls)
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight - 60; // 60px reserved for controls
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// ==== Game variables ====
+const riverHeight = canvas.height * 0.3; // River takes up 30% of the screen
+const pathHeight = canvas.height * 0.4; // Path takes up 40% of the screen
+const treesHeight = canvas.height * 0.3; // Trees take up 30% of the screen
+
+// Wave animation variables
+let waveOffset1 = 0;
+let waveOffset2 = 0;
+let waveOffset3 = 0;
+const waveSpeed = 0.05;
+const waveHeight = 8;
+const waveFrequency = 0.015;
+
+// Character properties
+const character = {
+  x: canvas.width * 0.05,
+  y: riverHeight + pathHeight * 0.5, // Start in the middle of the path
+  radius: 15,
+  color: "#FFD700",
+  speed: 0,
+  maxSpeed: 3,
+  pathOffset: 0, // For following the winding path
+  hairWave: 0 // For hair animation
+};
+
+// Define four event spots along the winding path
+let eventSpots = [];
+for (let i = 1; i <= 4; i++) {
+  const x = canvas.width * (i * 0.2);
+  const y = getPathY(x);
+  eventSpots.push({
+    x: x,
+    y: y,
+    triggered: false,
+    message: `You've reached event #${i}!`,
+  });
+}
+
+// Input state
+let movingLeft = false;
+let movingRight = false;
+let gamePaused = false;
+
+// Tree types with different properties
+const treeTypes = [
+  {
+    color: "#228B22", // Forest green
+    height: 60,
+    width: 60,
+    trunkHeight: 40,
+    trunkWidth: 10
+  },
+  {
+    color: "#006400", // Dark green
+    height: 50,
+    width: 50,
+    trunkHeight: 30,
+    trunkWidth: 8
+  },
+  {
+    color: "#32CD32", // Lime green
+    height: 70,
+    width: 70,
+    trunkHeight: 45,
+    trunkWidth: 12
+  },
+  {
+    color: "#355E3B", // Hunter green
+    height: 80,
+    width: 80,
+    trunkHeight: 50,
+    trunkWidth: 15
+  }
+];
+
+// Generate random trees
+let trees = [];
+function generateTrees() {
+  const treeCount = 200;
+  trees = [];
+  
+  for (let i = 0; i < treeCount; i++) {
+    const x = Math.random() * canvas.width;
+    // Calculate y position between path and bottom of screen
+    const pathY = getPathY(x);
+    const maxY = canvas.height - 60; // Account for controls
+    // Add minimum distance from path (30 pixels) to prevent overlap
+    const minDistanceFromPath = 30;
+    const y = pathY + minDistanceFromPath + Math.random() * (maxY - pathY - minDistanceFromPath);
+    
+    const type = treeTypes[Math.floor(Math.random() * treeTypes.length)];
+    
+    trees.push({
+      x: x,
+      y: y,
+      type: type
+    });
+  }
+}
+
+// Call generateTrees when canvas is resized
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  generateTrees();
+});
+
+// Generate initial trees
+generateTrees();
+
+// ==== Input Handlers ====
+// When touch (or mouse) starts on the left/right button, move character
+btnLeft.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  movingLeft = true;
+});
+btnLeft.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  movingLeft = false;
+});
+btnRight.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  movingRight = true;
+});
+btnRight.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  movingRight = false;
+});
+
+// For desktop testing: also listen to mousedown/mouseup (optional)
+btnLeft.addEventListener("mousedown", () => (movingLeft = true));
+btnLeft.addEventListener("mouseup", () => (movingLeft = false));
+btnRight.addEventListener("mousedown", () => (movingRight = true));
+btnRight.addEventListener("mouseup", () => (movingRight = false));
+
+// Continue button in overlay
+btnContinue.addEventListener("click", () => {
+  eventOverlay.classList.add("hidden");
+  gamePaused = false;
+  // Reset character position slightly to prevent immediate re-triggering
+  character.x += 10;
+});
+
+// ==== Game Loop & Drawing ====
+function drawRiver() {
+  // Draw river background with curved bottom
+  ctx.fillStyle = "#5CACEE";
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(canvas.width, 0);
+  ctx.lineTo(canvas.width, riverHeight);
+  
+  // Draw the curved bottom of the river following the path
+  for (let x = canvas.width; x >= 0; x -= 5) {
+    const y = getPathY(x);
+    ctx.lineTo(x, y);
+  }
+  
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw three sets of waves at different heights
+  const waveColors = ["#4A90E2", "#357ABD", "#2E5C8A"];
+  const waveOffsets = [waveOffset1, waveOffset2, waveOffset3];
+  const waveHeights = [0.2, 0.5, 0.8]; // Relative positions in the water
+
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = waveColors[i];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    for (let x = 0; x < canvas.width; x += 5) {
+      const baseY = getPathY(x);
+      const waterHeight = riverHeight - baseY;
+      const waveY = baseY + waterHeight * waveHeights[i];
+      const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
+      
+      if (x === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+
+    // Add foam effect
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    for (let x = 0; x < canvas.width; x += 5) {
+      const baseY = getPathY(x);
+      const waterHeight = riverHeight - baseY;
+      const waveY = baseY + waterHeight * waveHeights[i];
+      const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
+      
+      if (x === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    // Close the path to the bottom
+    ctx.lineTo(canvas.width, riverHeight);
+    ctx.lineTo(0, riverHeight);
+    ctx.closePath();
+    ctx.fill();
+  }
+  
+  // Update wave offsets
+  waveOffset1 += waveSpeed;
+  waveOffset2 += waveSpeed * 1.2; // Slightly different speeds
+  waveOffset3 += waveSpeed * 0.8;
+}
+
+function drawPath() {
+  ctx.strokeStyle = "#8B4513";
+  ctx.lineWidth = 40;
+  ctx.beginPath();
+  
+  for (let x = 0; x < canvas.width; x += 5) {
+    const y = getPathY(x);
+    if (x === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+}
+
+function getPathY(x) {
+  // Create a winding path using sine waves
+  return riverHeight + pathHeight * 0.5 + Math.sin(x * 0.005) * 50;
+}
+
+function drawTrees() {
+  trees.forEach(tree => {
+    ctx.save();
+    ctx.translate(tree.x, tree.y);
+    
+    // Draw tree trunk
+    ctx.fillStyle = "#8B4513";
+    ctx.fillRect(
+      -tree.type.trunkWidth / 2,
+      0,
+      tree.type.trunkWidth,
+      tree.type.trunkHeight
+    );
+    
+    // Draw tree top
+    ctx.fillStyle = tree.type.color;
+    ctx.beginPath();
+    ctx.moveTo(-tree.type.width / 2, 0);
+    ctx.lineTo(tree.type.width / 2, 0);
+    ctx.lineTo(0, -tree.type.height);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Add some detail to the tree
+    ctx.strokeStyle = "#006400";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-tree.type.width / 4, -tree.type.height / 3);
+    ctx.lineTo(tree.type.width / 4, -tree.type.height / 2);
+    ctx.stroke();
+    
+    ctx.restore();
+  });
+}
+
+function drawEventSpots() {
+  eventSpots.forEach((spot) => {
+    ctx.fillStyle = "#8B0000";
+    ctx.beginPath();
+    ctx.arc(spot.x, spot.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function drawCharacter() {
+  // Save the current context state
+  ctx.save();
+  
+  // Move to character's position
+  ctx.translate(character.x, character.y);
+  
+  // Draw the hair (long flowing hair)
+  ctx.fillStyle = "#D4AF37"; // Golden blonde color
+  ctx.beginPath();
+  // Main hair body with wave effect
+  ctx.ellipse(0, 0, 20, 25, Math.sin(character.hairWave) * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw hair details (some strands with wave effect)
+  ctx.strokeStyle = "#B8860B"; // Darker blonde for strands
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 5; i++) {
+    const angle = (i * Math.PI / 2.5) - Math.PI / 2;
+    const waveOffset = Math.sin(character.hairWave + i) * 5;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(
+      Math.cos(angle) * 15 + waveOffset,
+      Math.sin(angle) * 15,
+      Math.cos(angle) * 25 + waveOffset * 1.5,
+      Math.sin(angle) * 25
+    );
+    ctx.stroke();
+  }
+  
+  // Draw the head (smaller circle on top)
+  ctx.fillStyle = "#D4AF37"; // Same color as hair
+  ctx.beginPath();
+  ctx.arc(0, -10, 8, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Restore the context state
+  ctx.restore();
+}
+
+function updateCharacterPosition() {
+  if (movingLeft) {
+    character.speed = -character.maxSpeed;
+  } else if (movingRight) {
+    character.speed = character.maxSpeed;
+  } else {
+    character.speed = 0;
+  }
+  
+  character.x += character.speed;
+  character.y = getPathY(character.x);
+  
+  // Update hair wave animation
+  character.hairWave += 0.1;
+  
+  // Boundaries
+  if (character.x < character.radius) character.x = character.radius;
+  if (character.x > canvas.width - character.radius) character.x = canvas.width - character.radius;
+}
+
+function showEvent(msg) {
+  if (!gamePaused) {  // Only show if not already paused
+    gamePaused = true;
+    eventText.textContent = msg;
+    eventOverlay.classList.remove("hidden");
+  }
+}
+
+function checkForEvents() {
+  if (!gamePaused) {  // Only check for events if game is not paused
+    for (let spot of eventSpots) {
+      if (!spot.triggered && 
+          Math.abs(character.x - spot.x) < character.radius + 5 &&
+          Math.abs(character.y - spot.y) < character.radius + 5) {
+        spot.triggered = true;
+        showEvent(spot.message);
+        break;
+      }
+    }
+  }
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function gameLoop() {
+  if (!gamePaused) {
+    clearCanvas();
+    drawRiver();
+    drawPath();
+    drawTrees();
+    drawEventSpots();
+    updateCharacterPosition();
+    drawCharacter();
+    checkForEvents();
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+// Start the loop
+requestAnimationFrame(gameLoop);

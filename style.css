@@ -1,0 +1,124 @@
+/* Reset default margins/padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Prevent scrolling */
+    background-color: #eef2f3;
+    font-family: sans-serif;
+  }
+  
+  /* The canvas should fill the available space above the controls */
+  #gameCanvas {
+    display: block;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    touch-action: none; /* Prevent default touch actions */
+  }
+  
+  /* Controls container fixed to bottom */
+  #controls {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+  }
+  
+  /* Style for movement buttons */
+  #controls button {
+    width: 45%;
+    height: 80%;
+    font-size: 2rem;
+    border: none;
+    border-radius: 8px;
+    background-color: #ffffffcc;
+    touch-action: manipulation;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background-color 0.2s;
+  }
+  
+  #controls button:active {
+    background-color: #ffffff99;
+  }
+  
+  /* Overlay covering the entire screen */
+  #eventOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
+  
+  /* Hide when not in use */
+  .hidden {
+    display: none;
+  }
+  
+  /* Styling for the content box inside overlay */
+  #eventContent {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  #eventContent p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+  
+  #eventContent button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+    background-color: #4a90e2;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  #eventContent button:hover {
+    background-color: #357abd;
+  }
+  
+  /* Media queries for different screen sizes */
+  @media (max-width: 768px) {
+    #controls button {
+      font-size: 1.5rem;
+    }
+    
+    #eventContent {
+      width: 90%;
+      padding: 15px;
+    }
+    
+    #eventContent p {
+      font-size: 1rem;
+    }
+  }
+  

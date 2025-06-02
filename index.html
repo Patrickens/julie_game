@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, user-scalable=no"
+  />
+  <title>River Walk Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- The main game canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Control buttons: left and right -->
+  <div id="controls">
+    <button id="btnLeft">◀</button>
+    <button id="btnRight">▶</button>
+  </div>
+
+  <!-- Overlay div for event messages -->
+  <div id="eventOverlay" class="hidden">
+    <div id="eventContent">
+      <p id="eventText"></p>
+      <button id="btnContinue">Continue</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
