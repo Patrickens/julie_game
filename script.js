@@ -44,7 +44,7 @@ const character = {
   y: canvas.height * 0.5, // Start in the middle of the screen
   radius: 15,
   color: "#FFD700",
-  stepSize: 100, // Adjusted step size
+  stepSize: 100, // Reverted back to original step size
   hairWave: 0 // For hair animation
 };
 
@@ -372,8 +372,9 @@ function moveCharacter() {
   character.x += character.stepSize;
   character.y = getPathY(character.x);
   
-  // If character reaches the end, reset the game
+  // If character reaches the end, show final event
   if (character.x > canvas.width - character.radius) {
+    // TODO: Show final event GIF
     resetGame();
   }
 }
@@ -743,12 +744,63 @@ function handleCupAndBookClick(event) {
       // Remove the click handler
       canvas.removeEventListener('click', handleCupAndBookClick);
       // Reset button presses for next event
-      buttonPressesRemaining = 3;
+      buttonPressesRemaining = 5; // Increased to 5 moves
       // Re-enable move button
       btnMove.disabled = false;
       isEvent3Active = false;
+      // Mark event3 as triggered
+      eventsTriggered.event3 = true;
     }, 500);
   }
+}
+
+// Add tree hug overlay reference
+const treeHugOverlay = document.getElementById('treeHugOverlay');
+
+// Add fourth event coordinates
+const event4Coords = { x: 1200, y: 300 };
+
+// Update eventsTriggered object to include event4
+const eventsTriggered = {
+  event1: false,
+  event2: false,
+  event3: false,
+  event4: false
+};
+
+// Add tree hug event function
+function showTreeHugEvent() {
+  // Create and show the tree hug overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'treeHugOverlay';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  overlay.style.display = 'flex';
+  overlay.style.justifyContent = 'center';
+  overlay.style.alignItems = 'center';
+  overlay.style.zIndex = '100';
+
+  // Create and add the GIF
+  const gif = document.createElement('img');
+  gif.src = 'tree_huggin.gif';
+  gif.style.maxWidth = '80%';
+  gif.style.maxHeight = '80%';
+  overlay.appendChild(gif);
+
+  // Add to document
+  document.body.appendChild(overlay);
+
+  // Hide after GIF duration (assuming 3 seconds)
+  setTimeout(() => {
+    overlay.remove();
+    // Enable movement for final path
+    buttonPressesRemaining = 5;
+    btnMove.disabled = false;
+  }, 3000);
 }
 
 function checkForEvents() {
@@ -756,8 +808,8 @@ function checkForEvents() {
     const spot = eventSpots[i];
     // Increased trigger radius for better detection
     if (!spot.triggered && 
-        Math.abs(character.x - spot.x) < character.radius + 20 &&
-        Math.abs(character.y - spot.y) < character.radius + 20) {
+        Math.abs(character.x - spot.x) < character.radius + 50 &&
+        Math.abs(character.y - spot.y) < character.radius + 50) {
       console.log("Event triggered:", i, "at position:", character.x, character.y);
       spot.triggered = true;
       if (i === 0) { // First event - tarot cards
@@ -768,6 +820,9 @@ function checkForEvents() {
       } else if (i === 2) { // Third event - cup and book
         showCupAndBookEvent();
         buttonPressesRemaining = 3; // Reset button presses for next event
+      } else if (i === 3) { // Fourth event - tree hugging
+        showTreeHugEvent();
+        btnMove.disabled = true; // Disable movement during event
       }
       break;
     }
