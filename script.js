@@ -384,55 +384,162 @@ function updateCharacterPosition() {
 const dog = {
   x: -100, // Start off-screen
   y: 0,
-  width: 60,
-  height: 40,
+  width: 150, // Reduced size for better proportions
+  height: 150, // Reduced size for better proportions
   speed: 5,
-  isRunning: false
+  isRunning: false,
+  animationPhase: 0,
+  colors: {
+    belly: "#654321",
+    bellyDark: "#3f2a14"
+  }
 };
 
 function drawDog() {
   if (!dog.isRunning) return;
   
-  // Draw dog body
-  ctx.fillStyle = "#8B4513"; // Brown color
-  ctx.beginPath();
-  ctx.ellipse(dog.x, dog.y, dog.width/2, dog.height/2, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // Update animation phase
+  dog.animationPhase += 0.1;
   
-  // Draw dog head
+  // Draw shadow
+  ctx.fillStyle = "rgba(101, 67, 33, 0.15)";
   ctx.beginPath();
-  ctx.arc(dog.x + dog.width/2, dog.y - 5, dog.height/3, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // Draw legs (animated)
-  const legOffset = Math.sin(Date.now() * 0.01) * 5;
-  ctx.beginPath();
-  ctx.moveTo(dog.x - 10, dog.y);
-  ctx.lineTo(dog.x - 10, dog.y + 15 + legOffset);
-  ctx.moveTo(dog.x + 10, dog.y);
-  ctx.lineTo(dog.x + 10, dog.y + 15 - legOffset);
-  ctx.strokeStyle = "#8B4513";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  
-  // Draw tail (wagging)
-  const tailAngle = Math.sin(Date.now() * 0.02) * 0.5;
-  ctx.beginPath();
-  ctx.moveTo(dog.x - dog.width/2, dog.y);
-  ctx.quadraticCurveTo(
-    dog.x - dog.width/2 - 20, 
-    dog.y - 20, 
-    dog.x - dog.width/2 - 30, 
-    dog.y + Math.sin(tailAngle) * 10
+  ctx.roundRect(
+    dog.x + 15,
+    dog.y + 35,
+    120 + Math.sin(dog.animationPhase) * 3,
+    10,
+    [20, 20, 20, 20]
   );
-  ctx.strokeStyle = "#8B4513";
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  ctx.fill();
+  
+  // Draw belly (main body)
+  ctx.fillStyle = dog.colors.belly;
+  ctx.beginPath();
+  ctx.roundRect(
+    dog.x + 60,
+    dog.y + 15,
+    35 + Math.sin(dog.animationPhase * 4) * 2,
+    120,
+    [20, 20, 20, 20]
+  );
+  ctx.fill();
+  
+  // Draw head
+  ctx.fillStyle = dog.colors.belly;
+  ctx.beginPath();
+  ctx.roundRect(
+    dog.x + 103,
+    dog.y + 15 + Math.sin(dog.animationPhase * 2) * 1,
+    35,
+    60,
+    [20, 20, 20, 20]
+  );
+  ctx.fill();
+  
+  // Draw ear
+  ctx.fillStyle = dog.colors.bellyDark;
+  ctx.beginPath();
+  ctx.roundRect(
+    dog.x + 97,
+    dog.y + 15,
+    20,
+    25,
+    [10, 10, 10, 10]
+  );
+  ctx.fill();
+  
+  // Draw eye
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(dog.x + 121, dog.y + 25, 4.5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw pupil
+  ctx.fillStyle = dog.colors.bellyDark;
+  ctx.beginPath();
+  ctx.arc(dog.x + 123, dog.y + 25, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw nose
+  ctx.fillStyle = dog.colors.belly;
+  ctx.beginPath();
+  ctx.roundRect(
+    dog.x + 112,
+    dog.y + 30,
+    35,
+    15,
+    [0, 0, 10, 0]
+  );
+  ctx.fill();
+  
+  // Draw nose spot
+  ctx.fillStyle = dog.colors.bellyDark;
+  ctx.beginPath();
+  ctx.arc(dog.x + 153, dog.y + 32, 4, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw legs
+  const legAngle = Math.sin(dog.animationPhase * 2) * 12;
+  
+  // Front right leg
+  ctx.fillStyle = dog.colors.belly;
+  ctx.save();
+  ctx.translate(dog.x + 114, dog.y + 70);
+  ctx.rotate(legAngle * Math.PI / 180);
+  ctx.beginPath();
+  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.fill();
+  ctx.restore();
+  
+  // Front left leg
+  ctx.fillStyle = dog.colors.belly;
+  ctx.save();
+  ctx.translate(dog.x + 30, dog.y + 70);
+  ctx.rotate(-legAngle * Math.PI / 180);
+  ctx.beginPath();
+  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.fill();
+  ctx.restore();
+  
+  // Back right leg
+  ctx.fillStyle = dog.colors.bellyDark;
+  ctx.save();
+  ctx.translate(dog.x + 114, dog.y + 70);
+  ctx.rotate(-legAngle * Math.PI / 180);
+  ctx.beginPath();
+  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.fill();
+  ctx.restore();
+  
+  // Back left leg
+  ctx.fillStyle = dog.colors.bellyDark;
+  ctx.save();
+  ctx.translate(dog.x + 30, dog.y + 70);
+  ctx.rotate(legAngle * Math.PI / 180);
+  ctx.beginPath();
+  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.fill();
+  ctx.restore();
+  
+  // Draw tail
+  ctx.fillStyle = dog.colors.belly;
+  ctx.save();
+  ctx.translate(dog.x + 3, dog.y + 48);
+  ctx.rotate((12.5 + Math.sin(dog.animationPhase * 4) * 12.5) * Math.PI / 180);
+  ctx.beginPath();
+  ctx.roundRect(0, -4.5, 24 + Math.sin(dog.animationPhase * 4), 9, [20, 20, 20, 20]);
+  ctx.fill();
+  ctx.restore();
 }
 
 function updateDog() {
   if (dog.isRunning) {
     dog.x += dog.speed;
+    // Update dog's y position to follow the path
+    dog.y = getPathY(dog.x) - 75; // Adjusted position above path
+    // Animation phase is updated in drawDog
+    
     if (dog.x > canvas.width + 100) { // Reset when off-screen
       dog.isRunning = false;
       dog.x = -100;
@@ -442,7 +549,8 @@ function updateDog() {
 
 function showDogEvent() {
   dog.isRunning = true;
-  dog.y = getPathY(character.x) - 50; // Position dog above the path
+  dog.y = getPathY(character.x) - 75; // Adjusted position above path
+  dog.animationPhase = 0; // Reset animation phase
 }
 
 function checkForEvents() {
