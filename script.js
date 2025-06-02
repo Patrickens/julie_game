@@ -407,8 +407,8 @@ function drawDog() {
   ctx.roundRect(
     dog.x + 15,
     dog.y + 35,
-    120 + Math.sin(dog.animationPhase) * 3,
-    10,
+    180 + Math.sin(dog.animationPhase) * 3,
+    6,
     [20, 20, 20, 20]
   );
   ctx.fill();
@@ -417,11 +417,11 @@ function drawDog() {
   ctx.fillStyle = dog.colors.belly;
   ctx.beginPath();
   ctx.roundRect(
-    dog.x + 60,
-    dog.y + 15,
-    35 + Math.sin(dog.animationPhase * 4) * 2,
-    120,
-    [20, 20, 20, 20]
+    dog.x + 40,
+    dog.y + 25,
+    100 + Math.sin(dog.animationPhase * 4) * 2,
+    25,
+    [12, 12, 12, 12]
   );
   ctx.fill();
   
@@ -429,11 +429,11 @@ function drawDog() {
   ctx.fillStyle = dog.colors.belly;
   ctx.beginPath();
   ctx.roundRect(
-    dog.x + 103,
-    dog.y + 15 + Math.sin(dog.animationPhase * 2) * 1,
+    dog.x + 133,
+    dog.y + 20 + Math.sin(dog.animationPhase * 2) * 1,
     35,
-    60,
-    [20, 20, 20, 20]
+    40,
+    [15, 15, 15, 15]
   );
   ctx.fill();
   
@@ -441,42 +441,42 @@ function drawDog() {
   ctx.fillStyle = dog.colors.bellyDark;
   ctx.beginPath();
   ctx.roundRect(
-    dog.x + 97,
-    dog.y + 15,
+    dog.x + 127,
+    dog.y + 20,
     20,
-    25,
-    [10, 10, 10, 10]
+    20,
+    [8, 8, 8, 8]
   );
   ctx.fill();
   
   // Draw eye
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.arc(dog.x + 121, dog.y + 25, 4.5, 0, Math.PI * 2);
+  ctx.arc(dog.x + 151, dog.y + 25, 3.5, 0, Math.PI * 2);
   ctx.fill();
   
   // Draw pupil
   ctx.fillStyle = dog.colors.bellyDark;
   ctx.beginPath();
-  ctx.arc(dog.x + 123, dog.y + 25, 3.5, 0, Math.PI * 2);
+  ctx.arc(dog.x + 153, dog.y + 25, 2.5, 0, Math.PI * 2);
   ctx.fill();
   
   // Draw nose
   ctx.fillStyle = dog.colors.belly;
   ctx.beginPath();
   ctx.roundRect(
-    dog.x + 112,
+    dog.x + 142,
     dog.y + 30,
     35,
-    15,
-    [0, 0, 10, 0]
+    12,
+    [0, 0, 8, 0]
   );
   ctx.fill();
   
   // Draw nose spot
   ctx.fillStyle = dog.colors.bellyDark;
   ctx.beginPath();
-  ctx.arc(dog.x + 153, dog.y + 32, 4, 0, Math.PI * 2);
+  ctx.arc(dog.x + 183, dog.y + 32, 3, 0, Math.PI * 2);
   ctx.fill();
   
   // Draw legs
@@ -485,50 +485,50 @@ function drawDog() {
   // Front right leg
   ctx.fillStyle = dog.colors.belly;
   ctx.save();
-  ctx.translate(dog.x + 114, dog.y + 70);
+  ctx.translate(dog.x + 144, dog.y + 50);
   ctx.rotate(legAngle * Math.PI / 180);
   ctx.beginPath();
-  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.roundRect(-3, -8, 6, 16, [10, 10, 10, 10]);
   ctx.fill();
   ctx.restore();
   
   // Front left leg
   ctx.fillStyle = dog.colors.belly;
   ctx.save();
-  ctx.translate(dog.x + 30, dog.y + 70);
+  ctx.translate(dog.x + 60, dog.y + 50);
   ctx.rotate(-legAngle * Math.PI / 180);
   ctx.beginPath();
-  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.roundRect(-3, -8, 6, 16, [10, 10, 10, 10]);
   ctx.fill();
   ctx.restore();
   
   // Back right leg
   ctx.fillStyle = dog.colors.bellyDark;
   ctx.save();
-  ctx.translate(dog.x + 114, dog.y + 70);
+  ctx.translate(dog.x + 144, dog.y + 50);
   ctx.rotate(-legAngle * Math.PI / 180);
   ctx.beginPath();
-  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.roundRect(-3, -8, 6, 16, [10, 10, 10, 10]);
   ctx.fill();
   ctx.restore();
   
   // Back left leg
   ctx.fillStyle = dog.colors.bellyDark;
   ctx.save();
-  ctx.translate(dog.x + 30, dog.y + 70);
+  ctx.translate(dog.x + 60, dog.y + 50);
   ctx.rotate(legAngle * Math.PI / 180);
   ctx.beginPath();
-  ctx.roundRect(-5, -12, 10, 24, [20, 20, 20, 20]);
+  ctx.roundRect(-3, -8, 6, 16, [10, 10, 10, 10]);
   ctx.fill();
   ctx.restore();
   
   // Draw tail
   ctx.fillStyle = dog.colors.belly;
   ctx.save();
-  ctx.translate(dog.x + 3, dog.y + 48);
+  ctx.translate(dog.x + 3, dog.y + 35);
   ctx.rotate((12.5 + Math.sin(dog.animationPhase * 4) * 12.5) * Math.PI / 180);
   ctx.beginPath();
-  ctx.roundRect(0, -4.5, 24 + Math.sin(dog.animationPhase * 4), 9, [20, 20, 20, 20]);
+  ctx.roundRect(0, -3, 20 + Math.sin(dog.animationPhase * 4), 6, [15, 15, 15, 15]);
   ctx.fill();
   ctx.restore();
 }
