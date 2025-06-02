@@ -44,7 +44,7 @@ const character = {
   y: canvas.height * 0.5, // Start in the middle of the screen
   radius: 15,
   color: "#FFD700",
-  stepSize: 100, // Size of each step
+  stepSize: 100, // Adjusted step size
   hairWave: 0 // For hair animation
 };
 
@@ -332,6 +332,7 @@ function drawCharacter() {
 }
 
 function showEvent() {
+  console.log("Showing tarot cards event");
   eventOverlay.classList.remove("hidden");
   
   // Add click handlers for cards
@@ -343,12 +344,14 @@ function showEvent() {
       // Check if all cards are flipped
       const allFlipped = Array.from(cards).every(c => c.classList.contains('flipped'));
       if (allFlipped) {
-        // Wait 5 seconds before hiding the overlay
+        // Wait 1 second before hiding the overlay
         setTimeout(() => {
           eventOverlay.classList.add("hidden");
           // Reset cards for next time
           cards.forEach(c => c.classList.remove('flipped'));
-        }, 5000); // 5 seconds delay
+          // Reset button presses after tarot cards with more moves
+          buttonPressesRemaining = 5; // Adjusted number of moves
+        }, 1000); // 1 second delay
       }
     });
   });
@@ -377,16 +380,85 @@ function updateCharacterPosition() {
   character.hairWave += 0.1;
 }
 
+// Dog animation properties
+const dog = {
+  x: -100, // Start off-screen
+  y: 0,
+  width: 60,
+  height: 40,
+  speed: 5,
+  isRunning: false
+};
+
+function drawDog() {
+  if (!dog.isRunning) return;
+  
+  // Draw dog body
+  ctx.fillStyle = "#8B4513"; // Brown color
+  ctx.beginPath();
+  ctx.ellipse(dog.x, dog.y, dog.width/2, dog.height/2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw dog head
+  ctx.beginPath();
+  ctx.arc(dog.x + dog.width/2, dog.y - 5, dog.height/3, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw legs (animated)
+  const legOffset = Math.sin(Date.now() * 0.01) * 5;
+  ctx.beginPath();
+  ctx.moveTo(dog.x - 10, dog.y);
+  ctx.lineTo(dog.x - 10, dog.y + 15 + legOffset);
+  ctx.moveTo(dog.x + 10, dog.y);
+  ctx.lineTo(dog.x + 10, dog.y + 15 - legOffset);
+  ctx.strokeStyle = "#8B4513";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  
+  // Draw tail (wagging)
+  const tailAngle = Math.sin(Date.now() * 0.02) * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(dog.x - dog.width/2, dog.y);
+  ctx.quadraticCurveTo(
+    dog.x - dog.width/2 - 20, 
+    dog.y - 20, 
+    dog.x - dog.width/2 - 30, 
+    dog.y + Math.sin(tailAngle) * 10
+  );
+  ctx.strokeStyle = "#8B4513";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function updateDog() {
+  if (dog.isRunning) {
+    dog.x += dog.speed;
+    if (dog.x > canvas.width + 100) { // Reset when off-screen
+      dog.isRunning = false;
+      dog.x = -100;
+    }
+  }
+}
+
+function showDogEvent() {
+  dog.isRunning = true;
+  dog.y = getPathY(character.x) - 50; // Position dog above the path
+}
+
 function checkForEvents() {
   for (let i = 0; i < eventSpots.length; i++) {
     const spot = eventSpots[i];
+    // Increased trigger radius for better detection
     if (!spot.triggered && 
-        Math.abs(character.x - spot.x) < character.radius + 5 &&
-        Math.abs(character.y - spot.y) < character.radius + 5) {
+        Math.abs(character.x - spot.x) < character.radius + 20 &&
+        Math.abs(character.y - spot.y) < character.radius + 20) {
+      console.log("Event triggered:", i, "at position:", character.x, character.y);
       spot.triggered = true;
-      buttonPressesRemaining = 3; // Reset button presses at each event
-      if (i === 0) { // Only show tarot cards for the first event spot
+      if (i === 0) { // First event - tarot cards
         showEvent();
+      } else if (i === 1) { // Second event - dog
+        showDogEvent();
+        buttonPressesRemaining = 3; // Reset button presses for next event
       }
       break;
     }
@@ -405,6 +477,8 @@ function gameLoop() {
   drawEventSpots();
   updateCharacterPosition();
   drawCharacter();
+  updateDog();
+  drawDog();
   checkForEvents();
   requestAnimationFrame(gameLoop);
 }
