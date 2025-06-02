@@ -133,6 +133,26 @@ window.addEventListener("resize", () => {
 // Generate initial trees
 generateTrees();
 
+// Add shrub properties
+const shrubs = [];
+function generateShrubs() {
+  const shrubCount = 100;
+  shrubs.length = 0;
+  
+  for (let i = 0; i < shrubCount; i++) {
+    const x = Math.random() * canvas.width;
+    const pathY = getPathY(x);
+    const y = pathY + 20 + Math.random() * 30; // Position shrubs just above the path
+    
+    shrubs.push({
+      x: x,
+      y: y,
+      size: 10 + Math.random() * 15,
+      color: `rgb(${34 + Math.random() * 20}, ${139 + Math.random() * 20}, ${34 + Math.random() * 20})` // Various shades of green
+    });
+  }
+}
+
 // ==== Input Handlers ====
 // Add event state tracking
 let isEvent3Active = false;
@@ -229,7 +249,20 @@ function drawRiver() {
 }
 
 function drawPath() {
-  ctx.strokeStyle = "#8B4513";
+  // Draw forest floor base
+  ctx.fillStyle = "#D2B48C"; // Tan color for lighter brown
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height);
+  for (let x = 0; x < canvas.width; x += 5) {
+    const y = getPathY(x);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw path with texture
+  ctx.strokeStyle = "#8B4513"; // Saddle brown
   ctx.lineWidth = 40;
   ctx.beginPath();
   
@@ -242,6 +275,17 @@ function drawPath() {
     }
   }
   ctx.stroke();
+
+  // Add some texture to the path
+  ctx.strokeStyle = "#A0522D"; // Sienna
+  ctx.lineWidth = 2;
+  for (let x = 0; x < canvas.width; x += 20) {
+    const y = getPathY(x);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 15);
+    ctx.lineTo(x + 10, y - 5);
+    ctx.stroke();
+  }
 }
 
 function getPathY(x) {
@@ -838,6 +882,7 @@ function gameLoop() {
   clearCanvas();
   drawRiver();
   drawPath();
+  drawShrubs(); // Add shrubs before trees
   drawTrees();
   drawEventSpots();
   updateCharacterPosition();
@@ -905,3 +950,30 @@ function showFinalEvent() {
   // Start showing GIFs
   showNextGif();
 }
+
+// Add drawShrubs function
+function drawShrubs() {
+  shrubs.forEach(shrub => {
+    ctx.fillStyle = shrub.color;
+    ctx.beginPath();
+    ctx.arc(shrub.x, shrub.y, shrub.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add some detail to the shrub
+    ctx.strokeStyle = "rgba(0, 100, 0, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(shrub.x, shrub.y, shrub.size * 0.7, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+}
+
+// Generate shrubs when canvas is resized
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  generateTrees();
+  generateShrubs();
+});
+
+// Generate initial shrubs
+generateShrubs();

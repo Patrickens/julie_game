@@ -178,3 +178,88 @@
     }
   }
   
+  /* Tree hugging animation */
+  .tree-hug-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .tree-hug-scene {
+    width: 300px;
+    height: 400px;
+    position: relative;
+    perspective: 1000px;
+  }
+  
+  .tree-trunk {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 300px;
+    background: #8B4513;
+    border-radius: 20px;
+  }
+  
+  .hands {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 100px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .hand {
+    width: 60px;
+    height: 80px;
+    background: #FFE4C4;
+    border-radius: 30px;
+    position: relative;
+    transform-origin: bottom center;
+    animation: hugTree 2s ease-in-out forwards;
+  }
+  
+  .hand::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 40px;
+    height: 60px;
+    background: #FFE4C4;
+    border-radius: 20px;
+    transform: rotate(-20deg);
+  }
+  
+  @keyframes hugTree {
+    0% {
+      transform: translateX(0) rotate(0deg);
+    }
+    50% {
+      transform: translateX(0) rotate(0deg);
+    }
+    100% {
+      transform: translateX(calc(var(--direction) * 40px)) rotate(calc(var(--direction) * 45deg));
+    }
+  }
+  
+  .hand.left {
+    --direction: -1;
+  }
+  
+  .hand.right {
+    --direction: 1;
+  }
+  
