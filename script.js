@@ -44,9 +44,7 @@ const character = {
   y: canvas.height * 0.5, // Start in the middle of the screen
   radius: 15,
   color: "#FFD700",
-  speed: 0,
-  maxSpeed: 3,
-  pathOffset: 0, // For following the winding path
+  stepSize: 100, // Size of each step
   hairWave: 0 // For hair animation
 };
 
@@ -67,7 +65,7 @@ function resetEventSpots() {
 }
 
 // Input state
-let isMoving = false;
+let buttonPressesRemaining = 3; // Track remaining button presses
 
 // Tree types with different properties
 const treeTypes = [
@@ -139,31 +137,20 @@ generateTrees();
 // When touch (or mouse) starts on the move button, move character
 btnMove.addEventListener("touchstart", (e) => {
   e.preventDefault();
-  isMoving = true;
-  console.log("Touch start - isMoving:", isMoving);
+  if (buttonPressesRemaining > 0) {
+    moveCharacter();
+    buttonPressesRemaining--;
+    console.log("Touch start - Presses remaining:", buttonPressesRemaining);
+  }
 });
 
-btnMove.addEventListener("touchend", (e) => {
-  e.preventDefault();
-  isMoving = false;
-  console.log("Touch end - isMoving:", isMoving);
-});
-
-// For desktop testing: also listen to mousedown/mouseup
+// For desktop testing: also listen to mousedown
 btnMove.addEventListener("mousedown", () => {
-  isMoving = true;
-  console.log("Mouse down - isMoving:", isMoving);
-});
-
-btnMove.addEventListener("mouseup", () => {
-  isMoving = false;
-  console.log("Mouse up - isMoving:", isMoving);
-});
-
-// Also handle mouse leaving the button while pressed
-btnMove.addEventListener("mouseleave", () => {
-  isMoving = false;
-  console.log("Mouse leave - isMoving:", isMoving);
+  if (buttonPressesRemaining > 0) {
+    moveCharacter();
+    buttonPressesRemaining--;
+    console.log("Mouse down - Presses remaining:", buttonPressesRemaining);
+  }
 });
 
 // ==== Game Loop & Drawing ====
@@ -372,28 +359,22 @@ function resetGame() {
   character.y = getPathY(character.x);
   resetEventSpots();
   eventOverlay.classList.add("hidden");
+  buttonPressesRemaining = 3; // Reset button presses
 }
 
-function updateCharacterPosition() {
-  if (isMoving) {
-    character.speed = character.maxSpeed;
-  } else {
-    character.speed = 0;
-  }
-  
-  // Only update position if speed is not 0
-  if (character.speed > 0) {
-    character.x += character.speed;
-    character.y = getPathY(character.x);
-  }
-  
-  // Update hair wave animation
-  character.hairWave += 0.1;
+function moveCharacter() {
+  character.x += character.stepSize;
+  character.y = getPathY(character.x);
   
   // If character reaches the end, reset the game
   if (character.x > canvas.width - character.radius) {
     resetGame();
   }
+}
+
+function updateCharacterPosition() {
+  // Update hair wave animation
+  character.hairWave += 0.1;
 }
 
 function checkForEvents() {
@@ -403,6 +384,7 @@ function checkForEvents() {
         Math.abs(character.x - spot.x) < character.radius + 5 &&
         Math.abs(character.y - spot.y) < character.radius + 5) {
       spot.triggered = true;
+      buttonPressesRemaining = 3; // Reset button presses at each event
       if (i === 0) { // Only show tarot cards for the first event spot
         showEvent();
       }
