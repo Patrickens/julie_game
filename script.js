@@ -343,12 +343,12 @@ function showEvent() {
       // Check if all cards are flipped
       const allFlipped = Array.from(cards).every(c => c.classList.contains('flipped'));
       if (allFlipped) {
-        // Hide the overlay after all cards are flipped
+        // Wait 5 seconds before hiding the overlay
         setTimeout(() => {
           eventOverlay.classList.add("hidden");
           // Reset cards for next time
           cards.forEach(c => c.classList.remove('flipped'));
-        }, 2000);
+        }, 5000); // 5 seconds delay
       }
     });
   });
