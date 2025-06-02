@@ -1,11 +1,11 @@
 // ==== script.js ====
 
 /*
-  We choose a “base” resolution of 1920×1080 (16:9). 
+  We choose a "base" resolution of 1920×1080 (16:9). 
   After we compute the actual canvas size (which is also kept at 16:9), 
   we set:
       scale = (canvas.width / BASE_WIDTH)
-  and then multiply every hard‐coded dimension by that same scale.
+  and then multiply every hard-coded dimension by that same scale.
 */
 
 const BASE_WIDTH = 1920;
@@ -29,11 +29,11 @@ console.log("Game elements initialized:", {
   eventOverlay: eventOverlay
 });
 
-// We’ll store these as “let” so we can recalc them inside resizeCanvas():
+// We'll store these as "let" so we can recalc them inside resizeCanvas():
 let pathHeight = 0;
 let treesHeight = 0;
 
-// Game variables that depend on scale (we’ll overwrite them after resize)
+// Game variables that depend on scale (we'll overwrite them after resize)
 const character = {
   x: 0,
   y: 0,
@@ -79,17 +79,17 @@ const dog = {
   y: 0,
   width: 0,
   height: 0,
-  speed: 5,    // we’ll also scale this if desired
+  speed: 15,    // Increased from 5 to 15 (3x faster)
   isRunning: false,
   frameCount: 10,
   frameRate: 20,
   count: 0
 };
 
-// Sparkles (non‐size‐critical, but still use scale for offsets if needed)
+// Sparkles (non-size-critical, but still use scale for offsets if needed)
 const sparkles = [];
 
-// Four event spots along the winding path (we’ll rebuild these on resize)
+// Four event spots along the winding path (we'll rebuild these on resize)
 let eventSpots = [];
 
 // Track whether event3 (cup/book) is active
@@ -103,7 +103,7 @@ const eventsTriggered = {
   event4: false
 };
 
-// Tree types: we keep “base” numbers here (un‐scaled). When drawing, we multiply by scale.
+// Tree types: we keep "base" numbers here (un-scaled). When drawing, we multiply by scale.
 const treeTypes = [
   {
     color: "#228B22", // Forest green
@@ -135,13 +135,13 @@ const treeTypes = [
   }
 ];
 
-// We'll store actual tree instances here (positions do not need scaling once they’re generated in canvas‐space)
+// We'll store actual tree instances here (positions do not need scaling once they're generated in canvas-space)
 let trees = [];
 
-// Shrubs (we’ll generate sizes * scale)
+// Shrubs (we'll generate sizes * scale)
 const shrubs = [];
 
-// Keep track of how many “move” presses remain
+// Keep track of how many "move" presses remain
 let buttonPressesRemaining = 3;
 
 // Character image
@@ -160,16 +160,16 @@ function resizeCanvas() {
   let newWidth, newHeight;
 
   if (availableWidth / availableHeight > targetAspect) {
-    // area is “too wide”—height is the limiter
+    // area is "too wide"—height is the limiter
     newHeight = availableHeight;
     newWidth = Math.floor(newHeight * targetAspect);
   } else {
-    // area is “too tall” (or exactly 16:9)—width is the limiter
+    // area is "too tall" (or exactly 16:9)—width is the limiter
     newWidth = availableWidth;
     newHeight = Math.floor(newWidth / targetAspect);
   }
 
-  // 3) Update the canvas drawing‐buffer size
+  // 3) Update the canvas drawing-buffer size
   canvas.width = newWidth;
   canvas.height = newHeight;
 
@@ -211,12 +211,12 @@ function resizeCanvas() {
   book.y = canvas.height / 2;
 
   // DOG sizing & initial position
-  dog.width = 82 * scale;
-  dog.height = 61 * scale;
+  dog.width = 246 * scale;  // 82 * 3
+  dog.height = 183 * scale; // 61 * 3
   dog.x = -100 * scale;
   dog.y = getPathY(character.x) - 30 * scale;
 
-  // RE‐generate trees & shrubs now that the canvas size (and scale) changed
+  // RE-generate trees & shrubs now that the canvas size (and scale) changed
   generateTrees();
   generateShrubs();
 
@@ -279,7 +279,7 @@ function generateShrubs() {
 function resetEventSpots() {
   eventSpots = [];
 
-  // We use “base” pixel distances (350, 500, etc.) but multiply by scale:
+  // We use "base" pixel distances (350, 500, etc.) but multiply by scale:
   const startX = canvas.width * 0.05;
   // 1st event ~ 350 pixels from the start point (scaled):
   const event1X = startX + 350 * scale;
@@ -292,7 +292,7 @@ function resetEventSpots() {
   });
 
   // 2nd event is +500 base px (scaled):
-  const event2X = event1X + 500 * scale;
+  const event2X = event1X + 350 * scale;
   const event2Y = getPathY(event2X);
   eventSpots.push({
     x: event2X,
@@ -302,7 +302,7 @@ function resetEventSpots() {
   });
 
   // 3rd event
-  const event3X = event2X + 500 * scale;
+  const event3X = event2X + 350 * scale;
   const event3Y = getPathY(event3X);
   eventSpots.push({
     x: event3X,
@@ -312,7 +312,7 @@ function resetEventSpots() {
   });
 
   // 4th event
-  const event4X = event3X + 500 * scale;
+  const event4X = event3X + 350 * scale;
   const event4Y = getPathY(event4X);
   eventSpots.push({
     x: event4X,
@@ -347,12 +347,12 @@ function updateSparkles() {
 }
 
 function drawSparkles() {
-  sparkles.forEach(sparkle => {
+  sparkles.forEach(s => {
     ctx.save();
     ctx.translate(character.x, character.y);
-    ctx.fillStyle = `rgba(255, 192, 203, ${sparkle.opacity})`; // Pink
+    ctx.fillStyle = `rgba(255, 192, 203, ${s.opacity})`; // Pink
     ctx.beginPath();
-    ctx.arc(sparkle.x, sparkle.y, sparkle.size, 0, Math.PI * 2);
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   });
@@ -452,7 +452,7 @@ function drawRiver() {
 }
 
 function drawPath() {
-  // Forest‐floor base
+  // Forest-floor base
   ctx.fillStyle = "#D2B48C"; // Tan
   ctx.beginPath();
   ctx.moveTo(0, canvas.height);
@@ -678,7 +678,7 @@ function drawBook() {
     const leftPageEndX = leftPageX + pageWidth - (20 * scale);
     const rightPageEndX = rightPageX + pageWidth - (20 * scale);
 
-    // Left‐page squiggles
+    // Left-page squiggles
     for (let y = startY; y < endY; y += lineSpacing) {
       ctx.beginPath();
       ctx.moveTo(leftPageX + (20 * scale), y);
@@ -696,7 +696,7 @@ function drawBook() {
       ctx.stroke();
     }
 
-    // Right‐page squiggles
+    // Right-page squiggles
     for (let y = startY; y < endY; y += lineSpacing) {
       ctx.beginPath();
       ctx.moveTo(rightPageX + (20 * scale), y);
@@ -716,7 +716,7 @@ function drawBook() {
 
     // Random dots
     for (let i = 0; i < 15; i++) {
-      // Left‐page dot
+      // Left-page dot
       ctx.beginPath();
       ctx.arc(
         leftPageX + (30 * scale) + Math.random() * (pageWidth - (40 * scale)),
@@ -727,7 +727,7 @@ function drawBook() {
       );
       ctx.fill();
 
-      // Right‐page dot
+      // Right-page dot
       ctx.beginPath();
       ctx.arc(
         rightPageX + (30 * scale) + Math.random() * (pageWidth - (40 * scale)),
@@ -791,7 +791,7 @@ function drawDog() {
   // Update animation frames
   if (dog.frameIndex > 0 && dog.frameIndex % 5 === 0) {
     dog.frameIndex = 0;
-    dog.frameHeight += dog.height;
+    dog.frameHeight += 61; // Use original sprite height
   }
   if (dog.count === 9) {
     dog.frameIndex = 0;
@@ -799,7 +799,7 @@ function drawDog() {
     dog.count = 0;
   }
 
-  const currFrameX = (dog.width) * (dog.frameIndex % dog.frameCount);
+  const currFrameX = 82 * (dog.frameIndex % dog.frameCount); // Use original sprite width
   dog.imgDog.src = 'pug-running_transparent.png';
   ctx.drawImage(
     dog.imgDog,
