@@ -446,6 +446,301 @@ setInterval(function() {
   }
 }, 1000 / dog.frameRate);
 
+// Add new event elements
+const cup = {
+  x: canvas.width - 150,
+  y: canvas.height / 2,
+  width: 80,
+  height: 100,
+  isFull: true,
+  isVisible: false
+};
+
+const book = {
+  x: 100,
+  y: canvas.height / 2,
+  width: 120,
+  height: 160,
+  isOpen: true,
+  hasDrawing: false,
+  isVisible: false
+};
+
+// Add hand animation properties
+const hand = {
+  x: 0,
+  y: 0,
+  angle: 0,
+  isVisible: false,
+  animationPhase: 0
+};
+
+function drawCup() {
+  if (!cup.isVisible) return;
+  
+  // Draw cup with transparency
+  ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+  ctx.strokeStyle = "rgba(139, 69, 19, 0.8)";
+  ctx.lineWidth = 2;
+  
+  // Main cup body
+  ctx.beginPath();
+  ctx.moveTo(cup.x, cup.y);
+  ctx.lineTo(cup.x + cup.width, cup.y);
+  ctx.lineTo(cup.x + cup.width - 10, cup.y + cup.height);
+  ctx.lineTo(cup.x + 10, cup.y + cup.height);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  
+  // Draw handle with proper curve
+  ctx.beginPath();
+  ctx.moveTo(cup.x + cup.width, cup.y + 20);
+  ctx.bezierCurveTo(
+    cup.x + cup.width + 30, cup.y + 20,
+    cup.x + cup.width + 30, cup.y + cup.height - 20,
+    cup.x + cup.width, cup.y + cup.height - 20
+  );
+  ctx.stroke();
+  
+  // Draw liquid if cup is full
+  if (cup.isFull) {
+    // Draw liquid with gradient
+    const gradient = ctx.createLinearGradient(
+      cup.x, cup.y + 20,
+      cup.x, cup.y + cup.height - 10
+    );
+    gradient.addColorStop(0, "rgba(139, 69, 19, 0.8)");
+    gradient.addColorStop(1, "rgba(101, 67, 33, 0.8)");
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(cup.x + 10, cup.y + 20);
+    ctx.lineTo(cup.x + cup.width - 10, cup.y + 20);
+    ctx.lineTo(cup.x + cup.width - 15, cup.y + cup.height - 10);
+    ctx.lineTo(cup.x + 15, cup.y + cup.height - 10);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Add steam effect
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cup.x + cup.width/2, cup.y);
+      ctx.quadraticCurveTo(
+        cup.x + cup.width/2 + 10 * Math.sin(Date.now()/500 + i),
+        cup.y - 20 - i * 10,
+        cup.x + cup.width/2 + 20 * Math.sin(Date.now()/500 + i),
+        cup.y - 40 - i * 10
+      );
+      ctx.stroke();
+    }
+  } else {
+    // Draw empty cup effect (slight residue at bottom)
+    ctx.fillStyle = "rgba(139, 69, 19, 0.2)";
+    ctx.beginPath();
+    ctx.moveTo(cup.x + 15, cup.y + cup.height - 15);
+    ctx.lineTo(cup.x + cup.width - 15, cup.y + cup.height - 15);
+    ctx.lineTo(cup.x + cup.width - 15, cup.y + cup.height - 10);
+    ctx.lineTo(cup.x + 15, cup.y + cup.height - 10);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+function drawHand() {
+  if (!hand.isVisible) return;
+  
+  // Update hand position and angle
+  hand.animationPhase += 0.05;
+  const baseX = book.x + book.width/2;
+  const baseY = book.y + book.height/2;
+  
+  // Calculate hand position with slight movement
+  hand.x = baseX + Math.sin(hand.animationPhase) * 10;
+  hand.y = baseY + Math.cos(hand.animationPhase) * 5;
+  hand.angle = Math.sin(hand.animationPhase * 0.5) * 0.2;
+  
+  ctx.save();
+  ctx.translate(hand.x, hand.y);
+  ctx.rotate(hand.angle);
+  
+  // Draw hand
+  ctx.fillStyle = "#FFE4C4";
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // Draw pencil
+  ctx.fillStyle = "#8B4513";
+  ctx.beginPath();
+  ctx.moveTo(20, -2);
+  ctx.lineTo(35, -2);
+  ctx.lineTo(35, 2);
+  ctx.lineTo(20, 2);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Draw pencil tip
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  ctx.moveTo(35, -2);
+  ctx.lineTo(40, 0);
+  ctx.lineTo(35, 2);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.restore();
+}
+
+function drawBook() {
+  if (!book.isVisible) return;
+  
+  // Draw book cover
+  ctx.fillStyle = "#8B4513";
+  ctx.beginPath();
+  ctx.roundRect(book.x, book.y, book.width, book.height, 5);
+  ctx.fill();
+  
+  // Draw gutter (spine)
+  ctx.fillStyle = "#654321";
+  ctx.beginPath();
+  ctx.roundRect(book.x + book.width/2 - 3, book.y + 5, 6, book.height - 10, 2);
+  ctx.fill();
+  
+  // Calculate page dimensions
+  const pageWidth = book.width/2 - 8;
+  const pageHeight = book.height - 10;
+  const leftPageX = book.x + 5;
+  const rightPageX = book.x + book.width/2 + 3;
+  const pageY = book.y + 5;
+  
+  // Draw left page
+  ctx.fillStyle = "#FFF8DC";
+  ctx.beginPath();
+  ctx.roundRect(leftPageX, pageY, pageWidth, pageHeight, 3);
+  ctx.fill();
+  
+  // Draw right page
+  ctx.beginPath();
+  ctx.roundRect(rightPageX, pageY, pageWidth, pageHeight, 3);
+  ctx.fill();
+  
+  // Draw squiggly lines and drawing if book has been clicked
+  if (book.hasDrawing) {
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1;
+    
+    // Calculate squiggle parameters
+    const lineSpacing = pageHeight / 8;
+    const startY = pageY + lineSpacing;
+    const endY = pageY + pageHeight - lineSpacing;
+    const leftPageEndX = leftPageX + pageWidth - 20;
+    const rightPageEndX = rightPageX + pageWidth - 20;
+    
+    // Left page squiggles
+    for (let y = startY; y < endY; y += lineSpacing) {
+      ctx.beginPath();
+      ctx.moveTo(leftPageX + 20, y);
+      let x = leftPageX + 20;
+      while (x < leftPageEndX) {
+        const nextX = x + 15;
+        ctx.quadraticCurveTo(
+          x + 7.5,
+          y - 10 + Math.sin(Date.now()/1000 + x) * 8,
+          nextX,
+          y
+        );
+        x = nextX;
+      }
+      ctx.stroke();
+    }
+    
+    // Right page squiggles (different pattern)
+    for (let y = startY; y < endY; y += lineSpacing) {
+      ctx.beginPath();
+      ctx.moveTo(rightPageX + 20, y);
+      let x = rightPageX + 20;
+      while (x < rightPageEndX) {
+        const nextX = x + 15;
+        ctx.quadraticCurveTo(
+          x + 7.5,
+          y - 10 + Math.cos(Date.now()/1000 + x) * 8,
+          nextX,
+          y
+        );
+        x = nextX;
+      }
+      ctx.stroke();
+    }
+    
+    // Add some random dots on both pages
+    for (let i = 0; i < 15; i++) {
+      // Left page dots
+      ctx.beginPath();
+      ctx.arc(
+        leftPageX + 30 + Math.random() * (pageWidth - 40),
+        pageY + 30 + Math.random() * (pageHeight - 60),
+        1, 0, Math.PI * 2
+      );
+      ctx.fill();
+      
+      // Right page dots
+      ctx.beginPath();
+      ctx.arc(
+        rightPageX + 30 + Math.random() * (pageWidth - 40),
+        pageY + 30 + Math.random() * (pageHeight - 60),
+        1, 0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+  }
+}
+
+function showCupAndBookEvent() {
+  cup.isVisible = true;
+  cup.isFull = true;
+  book.isVisible = true;
+  book.hasDrawing = false;
+  hand.isVisible = true;
+  
+  // Add click handlers
+  canvas.addEventListener('click', handleCupAndBookClick);
+}
+
+function handleCupAndBookClick(event) {
+  const rect = canvas.getBoundingClientRect();
+  const clickX = event.clientX - rect.left;
+  const clickY = event.clientY - rect.top;
+  
+  // Check cup click
+  if (clickX >= cup.x && clickX <= cup.x + cup.width &&
+      clickY >= cup.y && clickY <= cup.y + cup.height) {
+    cup.isFull = false;
+  }
+  
+  // Check book click
+  if (clickX >= book.x && clickX <= book.x + book.width &&
+      clickY >= book.y && clickY <= book.y + book.height) {
+    book.hasDrawing = true;
+  }
+  
+  // Check if both interactions are complete
+  if (!cup.isFull && book.hasDrawing) {
+    // Wait 0.5 seconds before hiding everything
+    setTimeout(() => {
+      cup.isVisible = false;
+      book.isVisible = false;
+      hand.isVisible = false;
+      // Remove the click handler
+      canvas.removeEventListener('click', handleCupAndBookClick);
+      // Reset button presses for next event
+      buttonPressesRemaining = 3;
+    }, 500);
+  }
+}
+
 function checkForEvents() {
   for (let i = 0; i < eventSpots.length; i++) {
     const spot = eventSpots[i];
@@ -459,6 +754,9 @@ function checkForEvents() {
         showEvent();
       } else if (i === 1) { // Second event - dog
         showDogEvent();
+        buttonPressesRemaining = 5; // Reset button presses for next event
+      } else if (i === 2) { // Third event - cup and book
+        showCupAndBookEvent();
         buttonPressesRemaining = 3; // Reset button presses for next event
       }
       break;
@@ -480,6 +778,9 @@ function gameLoop() {
   drawCharacter();
   updateDog();
   drawDog();
+  drawCup();
+  drawBook();
+  drawHand();
   checkForEvents();
   requestAnimationFrame(gameLoop);
 }
