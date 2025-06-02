@@ -15,18 +15,63 @@ console.log("Game elements initialized:", {
   eventOverlay: eventOverlay
 });
 
-// Adjust canvas size to fill the viewport (minus controls)
+// Adjust canvas size to a 16:9 aspect ratio, letterboxing in black as needed
 function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight - 60; // 60px reserved for controls
+  // Compute the area above controls (controls are 60px tall at the bottom)
+  const availableWidth = window.innerWidth;
+  const availableHeight = window.innerHeight - 60;
+
+  // Desired 16:9 ratio: width / height = 16/9
+  const targetAspect = 16 / 9;
+
+  let newWidth, newHeight;
+
+  // Check whether width or height is the limiting factor
+  if (availableWidth / availableHeight > targetAspect) {
+    // Available area is “too wide” for 16:9; height is the limiter.
+    newHeight = availableHeight;
+    newWidth = Math.floor(availableHeight * targetAspect);
+  } else {
+    // Available area is “too tall” or just fits; width is the limiter.
+    newWidth = availableWidth;
+    newHeight = Math.floor(availableWidth / targetAspect);
+  }
+
+  // Set the canvas drawing buffer to the computed size (this sets ctx coordinate system)
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+
+  // Set the CSS size so it's exactly that many pixels on‐screen
+  canvas.style.width = `${newWidth}px`;
+  canvas.style.height = `${newHeight}px`;
+
+  // Position it absolutely so we can center it in the “letterbox” area
+  canvas.style.position = "absolute";
+
+  // Center horizontally within availableWidth
+  const leftOffset = Math.floor((availableWidth - newWidth) / 2);
+  // Center vertically within availableHeight (remember controls are at the bottom)
+  const topOffset = Math.floor((availableHeight - newHeight) / 2);
+
+  canvas.style.left = `${leftOffset}px`;
+  canvas.style.top = `${topOffset}px`;
 }
-window.addEventListener("resize", resizeCanvas);
+
+// Listen for window resizes
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  // If you regenerate scenery on resize, do that here:
+  generateTrees();
+  generateShrubs();
+});
+
+// Run it once on load
 resizeCanvas();
 
 // ==== Game variables ====
 // Remove the fixed river height since it will now extend from path to top
-const pathHeight = canvas.height * 0.4; // Path takes up 40% of the screen
-const treesHeight = canvas.height * 0.3; // Trees take up 30% of the screen
+let pathHeight = canvas.height * 0.4; // Path takes up 40% of the canvas
+let treesHeight = canvas.height * 0.3; // Trees take up 30% of the canvas
 
 // Wave animation variables
 let waveOffset1 = 0;
@@ -92,8 +137,8 @@ const character = {
 let eventSpots = [];
 function resetEventSpots() {
   eventSpots = [];
-  // First event after 3 steps (300 pixels) plus extra distance
-  const event1X = canvas.width * 0.05 + 350; // Increased from 300 to 400
+  // First event after ~350px from start
+  const event1X = canvas.width * 0.05 + 350;
   const event1Y = getPathY(event1X);
   eventSpots.push({
     x: event1X,
@@ -103,7 +148,7 @@ function resetEventSpots() {
   });
 
   // Second event
-  const event2X = event1X + 500;
+  const event2X = event1X + 350;
   const event2Y = getPathY(event2X);
   eventSpots.push({
     x: event2X,
@@ -113,7 +158,7 @@ function resetEventSpots() {
   });
 
   // Third event
-  const event3X = event2X + 500;
+  const event3X = event2X + 350;
   const event3Y = getPathY(event3X);
   eventSpots.push({
     x: event3X,
@@ -123,7 +168,7 @@ function resetEventSpots() {
   });
 
   // Fourth event
-  const event4X = event3X + 500;
+  const event4X = event3X + 350;
   const event4Y = getPathY(event4X);
   eventSpots.push({
     x: event4X,
@@ -176,10 +221,10 @@ function generateTrees() {
   
   for (let i = 0; i < treeCount; i++) {
     const x = Math.random() * canvas.width;
-    // Calculate y position between path and bottom of screen
+    // Calculate y position between path and bottom of canvas
     const pathY = getPathY(x);
-    const maxY = canvas.height - 60; // Account for controls
-    // Add minimum distance from path (30 pixels) to prevent overlap
+    const maxY = canvas.height;
+    // Add minimum distance from path (30px)
     const minDistanceFromPath = 30;
     const y = pathY + minDistanceFromPath + Math.random() * (maxY - pathY - minDistanceFromPath);
     
@@ -192,15 +237,6 @@ function generateTrees() {
     });
   }
 }
-
-// Call generateTrees when canvas is resized
-window.addEventListener("resize", () => {
-  resizeCanvas();
-  generateTrees();
-});
-
-// Generate initial trees
-generateTrees();
 
 // Add shrub properties
 const shrubs = [];
@@ -217,16 +253,27 @@ function generateShrubs() {
       x: x,
       y: y,
       size: 10 + Math.random() * 15,
-      color: `rgb(${34 + Math.random() * 20}, ${139 + Math.random() * 20}, ${34 + Math.random() * 20})` // Various shades of green
+      color: `rgb(${34 + Math.random() * 20}, ${139 + Math.random() * 20}, ${34 + Math.random() * 20})` // shades of green
     });
   }
 }
 
+// Call generateTrees & generateShrubs when canvas is resized
+window.addEventListener("resize", () => {
+  // (resizeCanvas already fires above, so canvas dimensions are up-to-date)
+  generateTrees();
+  generateShrubs();
+});
+
+// Generate initial trees & shrubs
+generateTrees();
+generateShrubs();
+
 // ==== Input Handlers ====
-// Add event state tracking
+// Track event state
 let isEvent3Active = false;
 
-// When touch (or mouse) starts on the move button, move character
+// Touch or mouse on “Move” button
 btnMove.addEventListener("touchstart", (e) => {
   e.preventDefault();
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
@@ -235,8 +282,6 @@ btnMove.addEventListener("touchstart", (e) => {
     console.log("Touch start - Presses remaining:", buttonPressesRemaining);
   }
 });
-
-// For desktop testing: also listen to mousedown
 btnMove.addEventListener("mousedown", () => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
     moveCharacter();
@@ -266,7 +311,7 @@ function drawRiver() {
   // Draw five sets of waves at different heights
   const waveColors = ["#4A90E2", "#357ABD", "#2E5C8A", "#4A90E2", "#357ABD"];
   const waveOffsets = [waveOffset1, waveOffset2, waveOffset3, waveOffset4, waveOffset5];
-  const waveHeights = [0.1, 0.25, 0.4, 0.55, 0.7]; // Adjusted to be more concentrated at the top
+  const waveHeights = [0.1, 0.25, 0.4, 0.55, 0.7]; // Fractional heights from top
 
   for (let i = 0; i < 5; i++) {
     ctx.strokeStyle = waveColors[i];
@@ -276,7 +321,7 @@ function drawRiver() {
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
       const waterHeight = pathY; // Height from top to path
-      const waveY = waterHeight * waveHeights[i]; // Start from top
+      const waveY = waterHeight * waveHeights[i];
       const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
       
       if (x === 0) {
@@ -292,10 +337,8 @@ function drawRiver() {
     ctx.beginPath();
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
-      const waterHeight = pathY; // Height from top to path
-      const waveY = waterHeight * waveHeights[i]; // Start from top
+      const waveY = pathY * waveHeights[i];
       const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * waveHeight;
-      
       if (x === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -309,7 +352,7 @@ function drawRiver() {
     ctx.fill();
   }
   
-  // Update wave offsets with different speeds for more dynamic movement
+  // Update wave offsets for animation
   waveOffset1 += waveSpeed;
   waveOffset2 += waveSpeed * 1.2;
   waveOffset3 += waveSpeed * 0.8;
@@ -319,7 +362,7 @@ function drawRiver() {
 
 function drawPath() {
   // Draw forest floor base
-  ctx.fillStyle = "#D2B48C"; // Tan color for lighter brown
+  ctx.fillStyle = "#D2B48C"; // Tan
   ctx.beginPath();
   ctx.moveTo(0, canvas.height);
   for (let x = 0; x < canvas.width; x += 5) {
@@ -330,11 +373,10 @@ function drawPath() {
   ctx.closePath();
   ctx.fill();
 
-  // Draw path with texture
+  // Draw path stroke
   ctx.strokeStyle = "#8B4513"; // Saddle brown
   ctx.lineWidth = 40;
   ctx.beginPath();
-  
   for (let x = 0; x < canvas.width; x += 5) {
     const y = getPathY(x);
     if (x === 0) {
@@ -345,7 +387,7 @@ function drawPath() {
   }
   ctx.stroke();
 
-  // Add some texture to the path
+  // Add some texture
   ctx.strokeStyle = "#A0522D"; // Sienna
   ctx.lineWidth = 2;
   for (let x = 0; x < canvas.width; x += 20) {
@@ -358,7 +400,7 @@ function drawPath() {
 }
 
 function getPathY(x) {
-  // Create a winding path using sine waves
+  // Winding path via sine wave
   return canvas.height * 0.5 + pathHeight * 0.5 + Math.sin(x * 0.005) * 50;
 }
 
@@ -367,7 +409,7 @@ function drawTrees() {
     ctx.save();
     ctx.translate(tree.x, tree.y);
     
-    // Draw tree trunk
+    // Trunk
     ctx.fillStyle = "#8B4513";
     ctx.fillRect(
       -tree.type.trunkWidth / 2,
@@ -376,7 +418,7 @@ function drawTrees() {
       tree.type.trunkHeight
     );
     
-    // Draw tree top
+    // Canopy
     ctx.fillStyle = tree.type.color;
     ctx.beginPath();
     ctx.moveTo(-tree.type.width / 2, 0);
@@ -385,7 +427,7 @@ function drawTrees() {
     ctx.closePath();
     ctx.fill();
     
-    // Add some detail to the tree
+    // Some detail
     ctx.strokeStyle = "#006400";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -397,23 +439,33 @@ function drawTrees() {
   });
 }
 
+function drawShrubs() {
+  shrubs.forEach(shrub => {
+    ctx.fillStyle = shrub.color;
+    ctx.beginPath();
+    ctx.arc(shrub.x, shrub.y, shrub.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Some detail
+    ctx.strokeStyle = "rgba(0, 100, 0, 0.3)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(shrub.x, shrub.y, shrub.size * 0.7, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+}
+
 function drawCharacter() {
-  // Draw character image
   ctx.save();
   ctx.translate(character.x, character.y);
-  
-  // Draw the image centered
   ctx.drawImage(
     characterImage,
-    -character.width/2,
-    -character.height/2,
+    -character.width / 2,
+    -character.height / 2,
     character.width,
     character.height
   );
-  
   ctx.restore();
-  
-  // Draw sparkles
   drawSparkles();
 }
 
@@ -421,23 +473,18 @@ function showEvent() {
   console.log("Showing tarot cards event");
   eventOverlay.classList.remove("hidden");
   
-  // Add click handlers for cards
   const cards = document.querySelectorAll('.card');
   cards.forEach(card => {
     card.addEventListener('click', () => {
       card.classList.add('flipped');
       
-      // Check if all cards are flipped
       const allFlipped = Array.from(cards).every(c => c.classList.contains('flipped'));
       if (allFlipped) {
-        // Wait 1 second before hiding the overlay
         setTimeout(() => {
           eventOverlay.classList.add("hidden");
-          // Reset cards for next time
           cards.forEach(c => c.classList.remove('flipped'));
-          // Reset button presses after tarot cards with more moves
-          buttonPressesRemaining = 5; // Adjusted number of moves
-        }, 1000); // 1 second delay
+          buttonPressesRemaining = 5; // After tarot cards, allow 5 moves
+        }, 1000);
       }
     });
   });
@@ -448,23 +495,21 @@ function resetGame() {
   character.y = getPathY(character.x);
   resetEventSpots();
   eventOverlay.classList.add("hidden");
-  buttonPressesRemaining = 3; // Reset button presses
+  buttonPressesRemaining = 3; // Reset
 }
 
 function moveCharacter() {
   character.x += character.stepSize;
   character.y = getPathY(character.x);
   
-  // If character reaches the end, show final event
   if (character.x > canvas.width - character.width) {
     showFinalEvent();
-    // Disable movement after reaching the end
     btnMove.disabled = true;
   }
 }
 
 function updateCharacterPosition() {
-  // Update hair wave animation
+  // Wiggle hair, etc.
   character.hairWave += 0.1;
 }
 
@@ -473,7 +518,7 @@ const dog = {
   imgDog: new Image(),
   frameHeight: 0,
   frameIndex: 0,
-  x: -100, // Start off-screen to the left
+  x: -100,
   y: 0,
   width: 82,
   height: 61,
@@ -487,7 +532,6 @@ const dog = {
 function drawDog() {
   if (!dog.isRunning) return;
   
-  // Update animation
   if (dog.frameIndex > 0 && dog.frameIndex % 5 === 0) {
     dog.frameIndex = 0;
     dog.frameHeight += 61;
@@ -506,27 +550,23 @@ function drawDog() {
 function updateDog() {
   if (dog.isRunning) {
     dog.x += dog.speed;
-    // Update dog's y position to follow the path
-    dog.y = getPathY(dog.x) - 30; // Position dog above the path
-    
-    // Reset when dog reaches the right edge of the screen
+    dog.y = getPathY(dog.x) - 30;
     if (dog.x > canvas.width + 100) {
       dog.isRunning = false;
-      dog.x = -100; // Reset position to off-screen left
+      dog.x = -100;
     }
   }
 }
 
 function showDogEvent() {
   dog.isRunning = true;
-  dog.x = -100; // Start from off-screen left
-  dog.y = getPathY(character.x) - 30; // Position dog above the path
+  dog.x = -100;
+  dog.y = getPathY(character.x) - 30;
   dog.frameIndex = 0;
   dog.frameHeight = 0;
   dog.count = 0;
 }
 
-// Set up dog animation interval
 setInterval(function() {
   if (dog.isRunning) {
     ++dog.frameIndex;
@@ -534,7 +574,7 @@ setInterval(function() {
   }
 }, 1000 / dog.frameRate);
 
-// Add new event elements
+// New event elements: cup & book / hand
 const cup = {
   x: canvas.width - 150,
   y: canvas.height / 2,
@@ -554,7 +594,6 @@ const book = {
   isVisible: false
 };
 
-// Add hand animation properties
 const hand = {
   x: 0,
   y: 0,
@@ -566,12 +605,10 @@ const hand = {
 function drawCup() {
   if (!cup.isVisible) return;
   
-  // Draw cup with transparency
   ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
   ctx.strokeStyle = "rgba(139, 69, 19, 0.8)";
   ctx.lineWidth = 2;
   
-  // Main cup body
   ctx.beginPath();
   ctx.moveTo(cup.x, cup.y);
   ctx.lineTo(cup.x + cup.width, cup.y);
@@ -581,7 +618,6 @@ function drawCup() {
   ctx.fill();
   ctx.stroke();
   
-  // Draw handle with proper curve
   ctx.beginPath();
   ctx.moveTo(cup.x + cup.width, cup.y + 20);
   ctx.bezierCurveTo(
@@ -591,9 +627,7 @@ function drawCup() {
   );
   ctx.stroke();
   
-  // Draw liquid if cup is full
   if (cup.isFull) {
-    // Draw liquid with gradient
     const gradient = ctx.createLinearGradient(
       cup.x, cup.y + 20,
       cup.x, cup.y + cup.height - 10
@@ -610,7 +644,6 @@ function drawCup() {
     ctx.closePath();
     ctx.fill();
     
-    // Add steam effect
     ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
     ctx.lineWidth = 2;
     for (let i = 0; i < 3; i++) {
@@ -625,7 +658,6 @@ function drawCup() {
       ctx.stroke();
     }
   } else {
-    // Draw empty cup effect (slight residue at bottom)
     ctx.fillStyle = "rgba(139, 69, 19, 0.2)";
     ctx.beginPath();
     ctx.moveTo(cup.x + 15, cup.y + cup.height - 15);
@@ -640,12 +672,10 @@ function drawCup() {
 function drawHand() {
   if (!hand.isVisible) return;
   
-  // Update hand position and angle
   hand.animationPhase += 0.05;
   const baseX = book.x + book.width/2;
   const baseY = book.y + book.height/2;
   
-  // Calculate hand position with slight movement
   hand.x = baseX + Math.sin(hand.animationPhase) * 10;
   hand.y = baseY + Math.cos(hand.animationPhase) * 5;
   hand.angle = Math.sin(hand.animationPhase * 0.5) * 0.2;
@@ -654,13 +684,11 @@ function drawHand() {
   ctx.translate(hand.x, hand.y);
   ctx.rotate(hand.angle);
   
-  // Draw hand
   ctx.fillStyle = "#FFE4C4";
   ctx.beginPath();
   ctx.ellipse(0, 0, 15, 10, 0, 0, Math.PI * 2);
   ctx.fill();
   
-  // Draw pencil
   ctx.fillStyle = "#8B4513";
   ctx.beginPath();
   ctx.moveTo(20, -2);
@@ -670,7 +698,6 @@ function drawHand() {
   ctx.closePath();
   ctx.fill();
   
-  // Draw pencil tip
   ctx.fillStyle = "#000000";
   ctx.beginPath();
   ctx.moveTo(35, -2);
@@ -685,42 +712,35 @@ function drawHand() {
 function drawBook() {
   if (!book.isVisible) return;
   
-  // Draw book cover
   ctx.fillStyle = "#8B4513";
   ctx.beginPath();
   ctx.roundRect(book.x, book.y, book.width, book.height, 5);
   ctx.fill();
   
-  // Draw gutter (spine)
   ctx.fillStyle = "#654321";
   ctx.beginPath();
   ctx.roundRect(book.x + book.width/2 - 3, book.y + 5, 6, book.height - 10, 2);
   ctx.fill();
   
-  // Calculate page dimensions
   const pageWidth = book.width/2 - 8;
   const pageHeight = book.height - 10;
   const leftPageX = book.x + 5;
   const rightPageX = book.x + book.width/2 + 3;
   const pageY = book.y + 5;
   
-  // Draw left page
   ctx.fillStyle = "#FFF8DC";
   ctx.beginPath();
   ctx.roundRect(leftPageX, pageY, pageWidth, pageHeight, 3);
   ctx.fill();
   
-  // Draw right page
   ctx.beginPath();
   ctx.roundRect(rightPageX, pageY, pageWidth, pageHeight, 3);
   ctx.fill();
   
-  // Draw squiggly lines and drawing if book has been clicked
   if (book.hasDrawing) {
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 1;
     
-    // Calculate squiggle parameters
     const lineSpacing = pageHeight / 8;
     const startY = pageY + lineSpacing;
     const endY = pageY + pageHeight - lineSpacing;
@@ -745,7 +765,7 @@ function drawBook() {
       ctx.stroke();
     }
     
-    // Right page squiggles (different pattern)
+    // Right page squiggles
     for (let y = startY; y < endY; y += lineSpacing) {
       ctx.beginPath();
       ctx.moveTo(rightPageX + 20, y);
@@ -763,9 +783,8 @@ function drawBook() {
       ctx.stroke();
     }
     
-    // Add some random dots on both pages
+    // Random dots
     for (let i = 0; i < 15; i++) {
-      // Left page dots
       ctx.beginPath();
       ctx.arc(
         leftPageX + 30 + Math.random() * (pageWidth - 40),
@@ -774,7 +793,6 @@ function drawBook() {
       );
       ctx.fill();
       
-      // Right page dots
       ctx.beginPath();
       ctx.arc(
         rightPageX + 30 + Math.random() * (pageWidth - 40),
@@ -794,10 +812,8 @@ function showCupAndBookEvent() {
   hand.isVisible = true;
   isEvent3Active = true;
   
-  // Disable move button
   btnMove.disabled = true;
   
-  // Add click handlers
   canvas.addEventListener('click', handleCupAndBookClick);
 }
 
@@ -806,45 +822,31 @@ function handleCupAndBookClick(event) {
   const clickX = event.clientX - rect.left;
   const clickY = event.clientY - rect.top;
   
-  // Check cup click
   if (clickX >= cup.x && clickX <= cup.x + cup.width &&
       clickY >= cup.y && clickY <= cup.y + cup.height) {
     cup.isFull = false;
   }
   
-  // Check book click
   if (clickX >= book.x && clickX <= book.x + book.width &&
       clickY >= book.y && clickY <= book.y + book.height) {
     book.hasDrawing = true;
   }
   
-  // Check if both interactions are complete
   if (!cup.isFull && book.hasDrawing) {
-    // Wait 0.5 seconds before hiding everything
     setTimeout(() => {
       cup.isVisible = false;
       book.isVisible = false;
       hand.isVisible = false;
-      // Remove the click handler
       canvas.removeEventListener('click', handleCupAndBookClick);
-      // Reset button presses for next event
-      buttonPressesRemaining = 5; // Increased to 5 moves
-      // Re-enable move button
+      buttonPressesRemaining = 5;
       btnMove.disabled = false;
       isEvent3Active = false;
-      // Mark event3 as triggered
       eventsTriggered.event3 = true;
     }, 500);
   }
 }
 
-// Add tree hug overlay reference
-const treeHugOverlay = document.getElementById('treeHugOverlay');
-
-// Add fourth event coordinates
-const event4Coords = { x: 1200, y: 300 };
-
-// Update eventsTriggered object to include event4
+// Fourth event: tree hug
 const eventsTriggered = {
   event1: false,
   event2: false,
@@ -852,9 +854,7 @@ const eventsTriggered = {
   event4: false
 };
 
-// Add tree hug event function
 function showTreeHugEvent() {
-  // Create and show the tree hug overlay
   const overlay = document.createElement('div');
   overlay.id = 'treeHugOverlay';
   overlay.style.position = 'fixed';
@@ -868,20 +868,17 @@ function showTreeHugEvent() {
   overlay.style.alignItems = 'center';
   overlay.style.zIndex = '100';
 
-  // Create and add the GIF
+  // GIF element
   const gif = document.createElement('img');
   gif.src = 'tree_huggin.gif';
   gif.style.maxWidth = '80%';
   gif.style.maxHeight = '80%';
   overlay.appendChild(gif);
 
-  // Add to document
   document.body.appendChild(overlay);
 
-  // Hide after 10 seconds and enable movement
   setTimeout(() => {
     overlay.remove();
-    // Enable movement for final path
     buttonPressesRemaining = 5;
     btnMove.disabled = false;
   }, 10000);
@@ -890,23 +887,22 @@ function showTreeHugEvent() {
 function checkForEvents() {
   for (let i = 0; i < eventSpots.length; i++) {
     const spot = eventSpots[i];
-    // Increased trigger radius for better detection
-    if (!spot.triggered && 
+    if (!spot.triggered &&
         Math.abs(character.x - spot.x) < character.width &&
         Math.abs(character.y - spot.y) < character.height) {
       console.log("Event triggered:", i, "at position:", character.x, character.y);
       spot.triggered = true;
-      if (i === 0) { // First event - tarot cards
+      if (i === 0) { // Tarot cards
         showEvent();
-      } else if (i === 1) { // Second event - dog
+      } else if (i === 1) { // Dog
         showDogEvent();
-        buttonPressesRemaining = 5; // Reset button presses for next event
-      } else if (i === 2) { // Third event - cup and book
+        buttonPressesRemaining = 5;
+      } else if (i === 2) { // Cup & book
         showCupAndBookEvent();
-        buttonPressesRemaining = 3; // Reset button presses for next event
-      } else if (i === 3) { // Fourth event - tree hugging
+        buttonPressesRemaining = 3;
+      } else if (i === 3) { // Tree hug
         showTreeHugEvent();
-        btnMove.disabled = true; // Disable movement during event
+        btnMove.disabled = true;
       }
       break;
     }
@@ -942,19 +938,16 @@ resetGame();
 console.log("Starting game loop...");
 requestAnimationFrame(gameLoop);
 
-// Add final event function
 function showFinalEvent() {
   let gifCount = 0;
   const maxGifs = 3;
   
   function showNextGif() {
     if (gifCount >= maxGifs) {
-      // Game is complete
       console.log("Game completed!");
       return;
     }
 
-    // Create and show the overlay
     const overlay = document.createElement('div');
     overlay.id = 'finalEventOverlay';
     overlay.style.position = 'fixed';
@@ -968,17 +961,14 @@ function showFinalEvent() {
     overlay.style.alignItems = 'center';
     overlay.style.zIndex = '100';
 
-    // Create and add the GIF
     const gif = document.createElement('img');
     gif.src = 'happy_birthday.gif';
     gif.style.maxWidth = '80%';
     gif.style.maxHeight = '80%';
     overlay.appendChild(gif);
 
-    // Add to document
     document.body.appendChild(overlay);
 
-    // Hide after GIF duration (assuming 3 seconds) and show next one
     setTimeout(() => {
       overlay.remove();
       gifCount++;
@@ -986,36 +976,5 @@ function showFinalEvent() {
     }, 3000);
   }
 
-  // Start showing GIFs
   showNextGif();
 }
-
-// Add drawShrubs function
-function drawShrubs() {
-  shrubs.forEach(shrub => {
-    ctx.fillStyle = shrub.color;
-    ctx.beginPath();
-    ctx.arc(shrub.x, shrub.y, shrub.size, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Add some detail to the shrub
-    ctx.strokeStyle = "rgba(0, 100, 0, 0.3)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(shrub.x, shrub.y, shrub.size * 0.7, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-}
-
-// Generate shrubs when canvas is resized
-window.addEventListener("resize", () => {
-  resizeCanvas();
-  generateTrees();
-  generateShrubs();
-});
-
-// Generate initial shrubs
-generateShrubs();
-
-// Generate initial sparkles
-generateSparkles();

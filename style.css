@@ -1,265 +1,265 @@
-/* Reset default margins/padding */
+/* ===== Reset margins/padding ===== */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  html,
-  body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* Prevent scrolling */
-    background-color: #eef2f3;
-    font-family: sans-serif;
-  }
-  
-  /* The canvas should fill the available space above the controls */
-  #gameCanvas {
-    display: block;
-    width: 100vw;
-    height: calc(100vh - 60px);
-    touch-action: none; /* Prevent default touch actions */
-  }
-  
-  /* Controls container fixed to bottom */
-  #controls {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 60px;
-    background-color: rgba(0, 0, 0, 0.1);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
-  }
-  
-  /* Style for movement button */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling */
+  background-color: #000; /* BLACK background for letterboxing */
+  font-family: sans-serif;
+}
+
+/* We remove the old full-viewport sizing from the canvas. 
+   Instead, we'll size/position it in JS so that it always stays at 16:9. */
+#gameCanvas {
+  display: block;
+  background-color: transparent; /* (game draws its own background) */
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Controls container fixed to bottom */
+#controls {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background-color: rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+/* Style for movement button */
+#controls button {
+  width: 45%;
+  height: 80%;
+  font-size: 2rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #ffffffcc;
+  touch-action: manipulation;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.2s;
+}
+
+#controls button:active {
+  background-color: #ffffff99;
+}
+
+/* Overlay covering the entire screen */
+#eventOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+/* Hide when not in use */
+.hidden {
+  display: none !important;
+}
+
+/* Tarot cards styling (unchanged) */
+.tarot-cards {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  padding: 20px;
+}
+
+.card {
+  width: 180px;
+  height: 315px;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-front {
+  background: white;
+  padding: 5px;
+}
+
+.card-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(45deg, #2c3e50, #3498db);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.card-text {
+  color: white;
+  text-align: center;
+}
+
+.card-text h3 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card-text p {
+  font-size: 16px;
+  line-height: 1.4;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Media queries for different screen sizes */
+@media (max-width: 768px) {
   #controls button {
-    width: 45%;
-    height: 80%;
-    font-size: 2rem;
-    border: none;
-    border-radius: 8px;
-    background-color: #ffffffcc;
-    touch-action: manipulation;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-    transition: background-color 0.2s;
+    font-size: 1.5rem;
   }
-  
-  #controls button:active {
-    background-color: #ffffff99;
-  }
-  
-  /* Overlay covering the entire screen */
-  #eventOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-  }
-  
-  /* Hide when not in use */
-  .hidden {
-    display: none !important;
-  }
-  
-  /* Tarot cards container */
-  .tarot-cards {
-    display: flex;
-    gap: 30px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    max-width: 1200px;
-    padding: 20px;
-  }
-  
-  /* Individual card styling */
+
   .card {
-    width: 180px;
-    height: 315px;
-    perspective: 1000px;
-    cursor: pointer;
+    width: 120px;
+    height: 210px;
   }
-  
-  .card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    transition: transform 0.8s;
-    transform-style: preserve-3d;
+
+  .tarot-cards {
+    gap: 15px;
   }
-  
-  .card.flipped .card-inner {
-    transform: rotateY(180deg);
-  }
-  
-  .card-front, .card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    border-radius: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  
-  .card-front {
-    background: white;
-    padding: 5px;
-  }
-  
-  .card-front img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 10px;
-  }
-  
-  .card-back {
-    transform: rotateY(180deg);
-    background: linear-gradient(45deg, #2c3e50, #3498db);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-  }
-  
-  .card-text {
-    color: white;
-    text-align: center;
-  }
-  
+
   .card-text h3 {
-    font-size: 24px;
-    margin-bottom: 15px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 18px;
+    margin-bottom: 10px;
   }
-  
+
   .card-text p {
-    font-size: 16px;
-    line-height: 1.4;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    font-size: 14px;
   }
-  
-  /* Media queries for different screen sizes */
-  @media (max-width: 768px) {
-    #controls button {
-      font-size: 1.5rem;
-    }
+}
 
-    .card {
-      width: 120px;
-      height: 210px;
-    }
+/* Tree hugging animation (unchanged) */
+.tree-hug-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
-    .tarot-cards {
-      gap: 15px;
-    }
+.tree-hug-scene {
+  width: 300px;
+  height: 400px;
+  position: relative;
+  perspective: 1000px;
+}
 
-    .card-text h3 {
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
+.tree-trunk {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 300px;
+  background: #8B4513;
+  border-radius: 20px;
+}
 
-    .card-text p {
-      font-size: 14px;
-    }
+.hands {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hand {
+  width: 60px;
+  height: 80px;
+  background: #FFE4C4;
+  border-radius: 30px;
+  position: relative;
+  transform-origin: bottom center;
+  animation: hugTree 2s ease-in-out forwards;
+}
+
+.hand::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 40px;
+  height: 60px;
+  background: #FFE4C4;
+  border-radius: 20px;
+  transform: rotate(-20deg);
+}
+
+@keyframes hugTree {
+  0% {
+    transform: translateX(0) rotate(0deg);
   }
-  
-  /* Tree hugging animation */
-  .tree-hug-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+  50% {
+    transform: translateX(0) rotate(0deg);
   }
-  
-  .tree-hug-scene {
-    width: 300px;
-    height: 400px;
-    position: relative;
-    perspective: 1000px;
+  100% {
+    transform: translateX(calc(var(--direction) * 40px)) rotate(calc(var(--direction) * 45deg));
   }
-  
-  .tree-trunk {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 300px;
-    background: #8B4513;
-    border-radius: 20px;
-  }
-  
-  .hands {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 100px;
-    display: flex;
-    justify-content: space-between;
-  }
-  
-  .hand {
-    width: 60px;
-    height: 80px;
-    background: #FFE4C4;
-    border-radius: 30px;
-    position: relative;
-    transform-origin: bottom center;
-    animation: hugTree 2s ease-in-out forwards;
-  }
-  
-  .hand::before {
-    content: '';
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 40px;
-    height: 60px;
-    background: #FFE4C4;
-    border-radius: 20px;
-    transform: rotate(-20deg);
-  }
-  
-  @keyframes hugTree {
-    0% {
-      transform: translateX(0) rotate(0deg);
-    }
-    50% {
-      transform: translateX(0) rotate(0deg);
-    }
-    100% {
-      transform: translateX(calc(var(--direction) * 40px)) rotate(calc(var(--direction) * 45deg));
-    }
-  }
-  
-  .hand.left {
-    --direction: -1;
-  }
-  
-  .hand.right {
-    --direction: 1;
-  }
-  
+}
+
+.hand.left {
+  --direction: -1;
+}
+
+.hand.right {
+  --direction: 1;
+}
