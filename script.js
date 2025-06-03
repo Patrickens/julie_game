@@ -198,16 +198,16 @@ function resizeCanvas() {
   character.x = canvas.width * 0.05;
   character.y = getPathY(character.x);
 
-  // CUP sizing & position
-  cup.width = 80 * scale;
-  cup.height = 100 * scale;
-  cup.x = canvas.width - (150 * scale);
+  // CUP sizing & position (increased size)
+  cup.width = 240 * scale;  // Doubled from 120
+  cup.height = 300 * scale; // Doubled from 150
+  cup.x = canvas.width - (300 * scale); // Moved further from edge to accommodate larger size
   cup.y = canvas.height / 2;
 
-  // BOOK sizing & position
-  book.width = 120 * scale;
-  book.height = 160 * scale;
-  book.x = 100 * scale;
+  // BOOK sizing & position (increased size)
+  book.width = 180 * scale;  // Increased from 120
+  book.height = 240 * scale; // Increased from 160
+  book.x = 150 * scale;
   book.y = canvas.height / 2;
 
   // DOG sizing & initial position
@@ -232,9 +232,13 @@ resizeCanvas();
 
 // ==== PATH & SCENE HELPERS ====
 
+// Update the wave frequency to be relative to screen width
+const waveFrequency = 0.015 * (1920 / window.innerWidth); // Adjust frequency based on screen width
+
 function getPathY(x) {
-  // Winding path via sine wave
-  return canvas.height * 0.5 + pathHeight * 0.5 + Math.sin(x * 0.005) * 50;
+  // Winding path via sine wave, adjusted for screen width
+  const frequency = 0.005 * (1920 / window.innerWidth); // Adjust frequency based on screen width
+  return canvas.height * 0.5 + pathHeight * 0.5 + Math.sin(x * frequency) * (50 * scale);
 }
 
 function generateTrees() {
@@ -389,13 +393,13 @@ function drawRiver() {
   ctx.moveTo(0, 0);
   ctx.lineTo(canvas.width, 0);
   ctx.lineTo(canvas.width, canvas.height);
-
+  
   // Curved bottom following path
   for (let x = canvas.width; x >= 0; x -= 5) {
     const y = getPathY(x);
     ctx.lineTo(x, y);
   }
-
+  
   ctx.closePath();
   ctx.fill();
 
@@ -408,13 +412,14 @@ function drawRiver() {
     ctx.strokeStyle = waveColors[i];
     ctx.lineWidth = 2 * scale;
     ctx.beginPath();
-
+    
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
       const waterHeight = pathY;
       const waveY = waterHeight * waveHeights[i];
-      const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * (waveHeight * scale);
-
+      const adjustedFrequency = waveFrequency * (1920 / window.innerWidth);
+      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (waveHeight * scale);
+      
       if (x === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -429,8 +434,9 @@ function drawRiver() {
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
       const waveY = pathY * waveHeights[i];
-      const y = waveY + Math.sin(x * waveFrequency + waveOffsets[i]) * (waveHeight * scale);
-
+      const adjustedFrequency = waveFrequency * (1920 / window.innerWidth);
+      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (waveHeight * scale);
+      
       if (x === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -442,7 +448,7 @@ function drawRiver() {
     ctx.closePath();
     ctx.fill();
   }
-
+  
   // Update wave offsets for animation
   waveOffset1 += waveSpeed;
   waveOffset2 += waveSpeed * 1.2;
@@ -566,27 +572,35 @@ function drawCup() {
   // Cup body
   ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
   ctx.strokeStyle = "rgba(139, 69, 19, 0.8)";
-  ctx.lineWidth = 2 * scale;
+  ctx.lineWidth = 3 * scale;
 
+  // Draw main cup body with more natural curve
   ctx.beginPath();
-  ctx.moveTo(cup.x, cup.y);
-  ctx.lineTo(cup.x + cup.width, cup.y);
-  ctx.lineTo(cup.x + cup.width - (10 * scale), cup.y + cup.height);
-  ctx.lineTo(cup.x + (10 * scale), cup.y + cup.height);
+  ctx.moveTo(cup.x + (cup.width * 0.1), cup.y);
+  ctx.lineTo(cup.x + (cup.width * 0.9), cup.y);
+  ctx.bezierCurveTo(
+    cup.x + cup.width + (cup.width * 0.1), cup.y + (cup.height * 0.2),
+    cup.x + cup.width + (cup.width * 0.1), cup.y + (cup.height * 0.8),
+    cup.x + (cup.width * 0.9), cup.y + cup.height
+  );
+  ctx.lineTo(cup.x + (cup.width * 0.1), cup.y + cup.height);
+  ctx.bezierCurveTo(
+    cup.x - (cup.width * 0.1), cup.y + (cup.height * 0.8),
+    cup.x - (cup.width * 0.1), cup.y + (cup.height * 0.2),
+    cup.x + (cup.width * 0.1), cup.y
+  );
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
 
-  // Handle
+  // Handle with better proportions (moved to left side and made thicker)
+  ctx.lineWidth = 8 * scale; // Made handle thicker
   ctx.beginPath();
-  ctx.moveTo(cup.x + cup.width, cup.y + (20 * scale));
+  ctx.moveTo(cup.x, cup.y + (cup.height * 0.2));
   ctx.bezierCurveTo(
-    cup.x + cup.width + (30 * scale),
-    cup.y + (20 * scale),
-    cup.x + cup.width + (30 * scale),
-    cup.y + cup.height - (20 * scale),
-    cup.x + cup.width,
-    cup.y + cup.height - (20 * scale)
+    cup.x - (cup.width * 0.4), cup.y + (cup.height * 0.2),
+    cup.x - (cup.width * 0.4), cup.y + (cup.height * 0.8),
+    cup.x, cup.y + (cup.height * 0.8)
   );
   ctx.stroke();
 
@@ -594,19 +608,28 @@ function drawCup() {
   if (cup.isFull) {
     const gradient = ctx.createLinearGradient(
       cup.x,
-      cup.y + (20 * scale),
+      cup.y + (cup.height * 0.2),
       cup.x,
-      cup.y + cup.height - (10 * scale)
+      cup.y + cup.height - (cup.height * 0.1)
     );
     gradient.addColorStop(0, "rgba(139, 69, 19, 0.8)");
     gradient.addColorStop(1, "rgba(101, 67, 33, 0.8)");
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.moveTo(cup.x + (10 * scale), cup.y + (20 * scale));
-    ctx.lineTo(cup.x + cup.width - (10 * scale), cup.y + (20 * scale));
-    ctx.lineTo(cup.x + cup.width - (15 * scale), cup.y + cup.height - (10 * scale));
-    ctx.lineTo(cup.x + (15 * scale), cup.y + cup.height - (10 * scale));
+    ctx.moveTo(cup.x + (cup.width * 0.15), cup.y + (cup.height * 0.2));
+    ctx.lineTo(cup.x + (cup.width * 0.85), cup.y + (cup.height * 0.2));
+    ctx.bezierCurveTo(
+      cup.x + cup.width - (cup.width * 0.1), cup.y + (cup.height * 0.4),
+      cup.x + cup.width - (cup.width * 0.1), cup.y + (cup.height * 0.6),
+      cup.x + (cup.width * 0.85), cup.y + cup.height - (cup.height * 0.1)
+    );
+    ctx.lineTo(cup.x + (cup.width * 0.15), cup.y + cup.height - (cup.height * 0.1));
+    ctx.bezierCurveTo(
+      cup.x + (cup.width * 0.1), cup.y + (cup.height * 0.6),
+      cup.x + (cup.width * 0.1), cup.y + (cup.height * 0.4),
+      cup.x + (cup.width * 0.15), cup.y + (cup.height * 0.2)
+    );
     ctx.closePath();
     ctx.fill();
 
@@ -615,12 +638,12 @@ function drawCup() {
     ctx.lineWidth = 2 * scale;
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.moveTo(cup.x + cup.width / 2, cup.y);
+      ctx.moveTo(cup.x + (cup.width * 0.5), cup.y);
       ctx.quadraticCurveTo(
-        cup.x + cup.width / 2 + (10 * Math.sin(Date.now() / 500 + i) * scale),
-        cup.y - (20 * scale) - (i * 10 * scale),
-        cup.x + cup.width / 2 + (20 * Math.sin(Date.now() / 500 + i) * scale),
-        cup.y - (40 * scale) - (i * 10 * scale)
+        cup.x + (cup.width * 0.5) + (20 * Math.sin(Date.now() / 500 + i) * scale),
+        cup.y - (30 * scale) - (i * 15 * scale),
+        cup.x + (cup.width * 0.5) + (40 * Math.sin(Date.now() / 500 + i) * scale),
+        cup.y - (60 * scale) - (i * 15 * scale)
       );
       ctx.stroke();
     }
@@ -628,10 +651,10 @@ function drawCup() {
     // Residue if empty
     ctx.fillStyle = "rgba(139, 69, 19, 0.2)";
     ctx.beginPath();
-    ctx.moveTo(cup.x + (15 * scale), cup.y + cup.height - (15 * scale));
-    ctx.lineTo(cup.x + cup.width - (15 * scale), cup.y + cup.height - (15 * scale));
-    ctx.lineTo(cup.x + cup.width - (15 * scale), cup.y + cup.height - (10 * scale));
-    ctx.lineTo(cup.x + (15 * scale), cup.y + cup.height - (10 * scale));
+    ctx.moveTo(cup.x + (cup.width * 0.15), cup.y + cup.height - (cup.height * 0.15));
+    ctx.lineTo(cup.x + (cup.width * 0.85), cup.y + cup.height - (cup.height * 0.15));
+    ctx.lineTo(cup.x + (cup.width * 0.85), cup.y + cup.height - (cup.height * 0.1));
+    ctx.lineTo(cup.x + (cup.width * 0.15), cup.y + cup.height - (cup.height * 0.1));
     ctx.closePath();
     ctx.fill();
   }
@@ -757,31 +780,31 @@ function drawHand() {
   ctx.translate(hand.x, hand.y);
   ctx.rotate(hand.angle);
 
-  // Draw palm (ellipse)
+  // Draw palm (ellipse) - tripled size
   ctx.fillStyle = "#FFE4C4";
   ctx.beginPath();
-  ctx.ellipse(0, 0, 15 * scale, 10 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 45 * scale, 30 * scale, 0, 0, Math.PI * 2); // Tripled from 15,10
   ctx.fill();
 
-  // Draw pencil body
+  // Draw pencil body - tripled size
   ctx.fillStyle = "#8B4513";
   ctx.beginPath();
-  ctx.moveTo(20 * scale, -2 * scale);
-  ctx.lineTo(35 * scale, -2 * scale);
-  ctx.lineTo(35 * scale, 2 * scale);
-  ctx.lineTo(20 * scale, 2 * scale);
+  ctx.moveTo(60 * scale, -6 * scale); // Tripled from 20,-2
+  ctx.lineTo(105 * scale, -6 * scale); // Tripled from 35,-2
+  ctx.lineTo(105 * scale, 6 * scale);  // Tripled from 35,2
+  ctx.lineTo(60 * scale, 6 * scale);   // Tripled from 20,2
   ctx.closePath();
   ctx.fill();
 
-  // Pencil tip
+  // Pencil tip - tripled size
   ctx.fillStyle = "#000000";
   ctx.beginPath();
-  ctx.moveTo(35 * scale, -2 * scale);
-  ctx.lineTo(40 * scale, 0);
-  ctx.lineTo(35 * scale, 2 * scale);
+  ctx.moveTo(105 * scale, -6 * scale);  // Tripled from 35,-2
+  ctx.lineTo(120 * scale, 0);           // Tripled from 40,0
+  ctx.lineTo(105 * scale, 6 * scale);   // Tripled from 35,2
   ctx.closePath();
   ctx.fill();
-
+  
   ctx.restore();
 }
 
@@ -1081,4 +1104,3 @@ let waveOffset4 = 0;
 let waveOffset5 = 0;
 const waveSpeed = 0.05;
 const waveHeight = 8;
-const waveFrequency = 0.015;
