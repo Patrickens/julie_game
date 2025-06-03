@@ -24,26 +24,6 @@ const bgMusic = new Audio('song.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5; // Set to 50% volume
 
-// Function to start background music
-function startBackgroundMusic() {
-  // Try to play the music
-  const playPromise = bgMusic.play();
-  
-  if (playPromise !== undefined) {
-    playPromise.catch(error => {
-      console.log("Auto-play prevented:", error);
-      // Add click listener to start music on first user interaction
-      document.addEventListener('click', function startMusicOnClick() {
-        bgMusic.play();
-        document.removeEventListener('click', startMusicOnClick);
-      }, { once: true });
-    });
-  }
-}
-
-// Start music when the page loads
-window.addEventListener('load', startBackgroundMusic);
-
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
 
@@ -450,9 +430,12 @@ btnMove.addEventListener("touchstart", (e) => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
     // Start music on first move
     if (buttonPressesRemaining === 3) {
-      bgMusic.play().catch(error => {
-        console.log("Audio playback failed:", error);
-      });
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Audio playback failed:", error);
+        });
+      }
     }
     moveCharacter();
     buttonPressesRemaining--;
@@ -464,9 +447,12 @@ btnMove.addEventListener("mousedown", () => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
     // Start music on first move
     if (buttonPressesRemaining === 3) {
-      bgMusic.play().catch(error => {
-        console.log("Audio playback failed:", error);
-      });
+      const playPromise = bgMusic.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Audio playback failed:", error);
+        });
+      }
     }
     moveCharacter();
     buttonPressesRemaining--;
