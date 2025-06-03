@@ -19,6 +19,25 @@ const ctx = canvas.getContext("2d");
 const btnMove = document.getElementById("btnMove"); // Single movement button
 const eventOverlay = document.getElementById("eventOverlay");
 
+// Background music setup
+const backgroundMusic = new Audio('song.mp3');
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.5; // Set to 50% volume
+
+// Start background music when user first interacts with the game
+function startBackgroundMusic() {
+  backgroundMusic.play().catch(error => {
+    console.log("Background music playback failed:", error);
+  });
+  // Remove the event listeners after first interaction
+  document.removeEventListener('click', startBackgroundMusic);
+  document.removeEventListener('touchstart', startBackgroundMusic);
+}
+
+// Add event listeners for first user interaction
+document.addEventListener('click', startBackgroundMusic);
+document.addEventListener('touchstart', startBackgroundMusic);
+
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
 
@@ -929,6 +948,12 @@ function showEvent() {
 }
 
 function showDogEvent() {
+  // Create and play barking sound
+  const barkSound = new Audio('dog_barking.mp3');
+  barkSound.play().catch(error => {
+    console.log("Audio playback failed:", error);
+  });
+
   dog.isRunning = true;
   dog.x = -100 * scale;
   dog.y = getPathY(character.x) - (30 * scale);
@@ -1136,6 +1161,15 @@ setInterval(() => {
   if (dog.isRunning) {
     ++dog.frameIndex;
     dog.count++;
+    if (dog.frameIndex > 0 && dog.frameIndex % 5 === 0) {
+      dog.frameIndex = 0;
+      dog.frameHeight += 61; // Use original sprite height
+    }
+    if (dog.count === 9) {
+      dog.frameIndex = 0;
+      dog.frameHeight = 0;
+      dog.count = 0;
+    }
   }
 }, 1000 / dog.frameRate);
 
