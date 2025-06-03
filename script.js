@@ -332,34 +332,99 @@ function generateSparkles() {
   sparkles.length = 0;
   for (let i = 0; i < 10; i++) {
     sparkles.push({
-      x: 0,
-      y: 0,
-      size: (3 + Math.random() * 4) * scale,
-      angle: Math.random() * Math.PI * 2,
-      speed: 0.5 + Math.random() * 1,
-      opacity: 0.3 + Math.random() * 0.7
+      x: Math.random() * 100 - 50,  // Random position around character
+      y: Math.random() * 100 - 50,
+      size: 2 * scale,              // Start small
+      maxSize: 8 * scale,           // Maximum size before burst
+      color: "rgba(255, 192, 203, 0.8)", // Pink
+      burstColor: "rgba(255, 255, 0, 0.8)", // Yellow
+      growthRate: 0.1 + Math.random() * 0.2,
+      isBursting: false,
+      burstProgress: 0,
+      rotation: Math.random() * Math.PI * 2
     });
   }
 }
 
 function updateSparkles() {
   sparkles.forEach(s => {
-    s.angle += 0.1;
-    s.x = Math.cos(s.angle) * (20 * scale);
-    s.y = Math.sin(s.angle) * (20 * scale) - (30 * scale);
+    if (!s.isBursting) {
+      // Grow the star
+      s.size += s.growthRate * scale;
+      if (s.size >= s.maxSize) {
+        s.isBursting = true;
+        s.burstProgress = 0;
+      }
+    } else {
+      // Burst animation
+      s.burstProgress += 0.1;
+      if (s.burstProgress >= 1) {
+        // Reset star
+        s.x = Math.random() * 100 - 50;
+        s.y = Math.random() * 100 - 50;
+        s.size = 2 * scale;
+        s.isBursting = false;
+      }
+    }
   });
 }
 
 function drawSparkles() {
   sparkles.forEach(s => {
     ctx.save();
-    ctx.translate(character.x, character.y);
-    ctx.fillStyle = `rgba(255, 192, 203, ${s.opacity})`; // Pink
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.translate(character.x + s.x, character.y + s.y);
+    ctx.rotate(s.rotation);
+
+    if (!s.isBursting) {
+      // Draw growing star
+      ctx.fillStyle = s.color;
+      drawStar(0, 0, s.size, s.size * 0.5, 5);
+    } else {
+      // Draw bursting star - three times smaller
+      const burstSize = (s.size / 3) * (1 + s.burstProgress);
+      ctx.fillStyle = s.burstColor;
+      drawStar(0, 0, burstSize, burstSize * 0.5, 5);
+      // Add burst rays - also three times smaller
+      ctx.strokeStyle = s.burstColor;
+      ctx.lineWidth = 2 * scale;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(
+          Math.cos(angle) * burstSize * 1.5,
+          Math.sin(angle) * burstSize * 1.5
+        );
+        ctx.stroke();
+      }
+    }
     ctx.restore();
   });
+}
+
+// Helper function to draw a star
+function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+  let rot = Math.PI / 2 * 3;
+  let x = cx;
+  let y = cy;
+  let step = Math.PI / spikes;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    x = cx + Math.cos(rot) * outerRadius;
+    y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+  ctx.fill();
 }
 
 // ==== INPUT HANDLERS ====
@@ -769,7 +834,7 @@ function drawHand() {
 
   // Animate hand
   hand.animationPhase += 0.05;
-  const baseX = book.x + book.width / 2;
+  const baseX = book.x - (book.width * 0.3); // Moved hand to the left
   const baseY = book.y + book.height / 2;
 
   hand.x = baseX + Math.sin(hand.animationPhase) * (10 * scale);
@@ -783,25 +848,25 @@ function drawHand() {
   // Draw palm (ellipse) - tripled size
   ctx.fillStyle = "#FFE4C4";
   ctx.beginPath();
-  ctx.ellipse(0, 0, 45 * scale, 30 * scale, 0, 0, Math.PI * 2); // Tripled from 15,10
+  ctx.ellipse(0, 0, 45 * scale, 30 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Draw pencil body - tripled size
   ctx.fillStyle = "#8B4513";
   ctx.beginPath();
-  ctx.moveTo(60 * scale, -6 * scale); // Tripled from 20,-2
-  ctx.lineTo(105 * scale, -6 * scale); // Tripled from 35,-2
-  ctx.lineTo(105 * scale, 6 * scale);  // Tripled from 35,2
-  ctx.lineTo(60 * scale, 6 * scale);   // Tripled from 20,2
+  ctx.moveTo(60 * scale, -6 * scale);
+  ctx.lineTo(105 * scale, -6 * scale);
+  ctx.lineTo(105 * scale, 6 * scale);
+  ctx.lineTo(60 * scale, 6 * scale);
   ctx.closePath();
   ctx.fill();
 
   // Pencil tip - tripled size
   ctx.fillStyle = "#000000";
   ctx.beginPath();
-  ctx.moveTo(105 * scale, -6 * scale);  // Tripled from 35,-2
-  ctx.lineTo(120 * scale, 0);           // Tripled from 40,0
-  ctx.lineTo(105 * scale, 6 * scale);   // Tripled from 35,2
+  ctx.moveTo(105 * scale, -6 * scale);
+  ctx.lineTo(120 * scale, 0);
+  ctx.lineTo(105 * scale, 6 * scale);
   ctx.closePath();
   ctx.fill();
   
