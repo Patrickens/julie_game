@@ -167,6 +167,8 @@ function resizeCanvas() {
   canvas.style.position = "fixed";
   canvas.style.top = "0";
   canvas.style.left = "0";
+  canvas.style.right = "0";
+  canvas.style.bottom = "0";
 
   // Compute our uniform scale factor (base 1920 wide)
   scale = screenWidth / BASE_WIDTH;
@@ -210,6 +212,11 @@ function resizeCanvas() {
 
 // Call resizeCanvas whenever the window changes
 window.addEventListener("resize", resizeCanvas);
+
+// Also handle orientation changes specifically
+window.addEventListener("orientationchange", () => {
+  setTimeout(resizeCanvas, 100); // Small delay to ensure proper dimensions
+});
 
 // Initial call
 resizeCanvas();
