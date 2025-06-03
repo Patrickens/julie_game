@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover, minimal-ui" />
   <meta name="screen-orientation" content="landscape">
   <meta name="x5-orientation" content="landscape">
   <meta name="full-screen" content="yes">
@@ -36,24 +36,27 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       touch-action: none;
+      z-index: 1;
     }
 
     #controls {
       position: fixed;
-      top: 20px;
+      top: 5vh;
       left: 50%;
       transform: translateX(-50%);
-      z-index: 1000;
+      z-index: 2;
       pointer-events: none;
+      width: 30vw;
     }
 
     #btnMove {
-      padding: 35px 60px;
-      font-size: 32px;
-      border-radius: 50px;
+      width: 100%;
+      height: 15vh;
+      font-size: 5vh;
+      border-radius: 2vh;
       border: none;
       background-color: rgba(76, 175, 80, 0.8);
       color: white;
@@ -65,9 +68,7 @@
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
       transform-origin: center;
-      transition: transform 0.1s ease-out, background-color 0.1s ease-out;
-      min-width: 200px;
-      min-height: 100px;
+      transition: transform 0.1s ease-out, background-color 0.1s ease-out, opacity 0.3s ease-out;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -76,9 +77,24 @@
       letter-spacing: 1px;
     }
 
-    #btnMove:active {
+    #btnMove:active:not(:disabled) {
       background-color: rgba(69, 160, 73, 0.9);
       transform: scale(0.95);
+    }
+
+    #btnMove:disabled {
+      background-color: rgba(128, 128, 128, 0.5);
+      cursor: not-allowed;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    #eventOverlay {
+      z-index: 1000;
+    }
+
+    #treeHugOverlay, #finalEventOverlay {
+      z-index: 1000;
     }
 
     @media screen and (orientation: portrait) {
@@ -120,7 +136,7 @@
         height: -webkit-fill-available;
       }
       #controls {
-        top: max(20px, env(safe-area-inset-top));
+        top: max(5vh, env(safe-area-inset-top));
       }
     }
   </style>

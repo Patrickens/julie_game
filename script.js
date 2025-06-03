@@ -151,43 +151,27 @@ characterImage.src = 'Julie_char.png';
 // ==== RESIZE & SCALE LOGIC ====
 
 function resizeCanvas() {
-  // 1) Compute the area above the 60px controls
-  const availableWidth = window.innerWidth;
-  const availableHeight = window.innerHeight - 60; // leave 60px at bottom for controls
+  // Get the actual screen dimensions
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
 
-  // 2) We want a 16:9 box to fit inside (availableWidth × availableHeight)
-  const targetAspect = 16 / 9;
-  let newWidth, newHeight;
+  // Set canvas size to match screen dimensions exactly
+  canvas.width = screenWidth;
+  canvas.height = screenHeight;
 
-  if (availableWidth / availableHeight > targetAspect) {
-    // area is "too wide"—height is the limiter
-    newHeight = availableHeight;
-    newWidth = Math.floor(newHeight * targetAspect);
-  } else {
-    // area is "too tall" (or exactly 16:9)—width is the limiter
-    newWidth = availableWidth;
-    newHeight = Math.floor(newWidth / targetAspect);
-  }
+  // Update the CSS size to match
+  canvas.style.width = `${screenWidth}px`;
+  canvas.style.height = `${screenHeight}px`;
 
-  // 3) Update the canvas drawing-buffer size
-  canvas.width = newWidth;
-  canvas.height = newHeight;
+  // Position canvas to fill the entire screen
+  canvas.style.position = "fixed";
+  canvas.style.top = "0";
+  canvas.style.left = "0";
 
-  // 4) Update the CSS size so that the <canvas> is exactly that many pixels
-  canvas.style.width = `${newWidth}px`;
-  canvas.style.height = `${newHeight}px`;
+  // Compute our uniform scale factor (base 1920 wide)
+  scale = screenWidth / BASE_WIDTH;
 
-  // 5) Center it (letterbox background is black from <body> in your CSS)
-  canvas.style.position = "absolute";
-  const leftOffset = Math.floor((availableWidth - newWidth) / 2);
-  const topOffset = Math.floor((availableHeight - newHeight) / 2);
-  canvas.style.left = `${leftOffset}px`;
-  canvas.style.top = `${topOffset}px`;
-
-  // 6) Compute our uniform scale factor (base 1920 wide)
-  scale = newWidth / BASE_WIDTH;
-
-  // 7) Recompute anything that depends on canvas.height or canvas.width
+  // Recompute anything that depends on canvas.height or canvas.width
   pathHeight = canvas.height * 0.4;
   treesHeight = canvas.height * 0.3;
 
@@ -198,21 +182,21 @@ function resizeCanvas() {
   character.x = canvas.width * 0.05;
   character.y = getPathY(character.x);
 
-  // CUP sizing & position (increased size)
-  cup.width = 240 * scale;  // Doubled from 120
-  cup.height = 300 * scale; // Doubled from 150
-  cup.x = canvas.width - (300 * scale); // Moved further from edge to accommodate larger size
+  // CUP sizing & position
+  cup.width = 240 * scale;
+  cup.height = 300 * scale;
+  cup.x = canvas.width - (300 * scale);
   cup.y = canvas.height / 2;
 
-  // BOOK sizing & position (increased size)
-  book.width = 180 * scale;  // Increased from 120
-  book.height = 240 * scale; // Increased from 160
+  // BOOK sizing & position
+  book.width = 180 * scale;
+  book.height = 240 * scale;
   book.x = 150 * scale;
   book.y = canvas.height / 2;
 
   // DOG sizing & initial position
-  dog.width = 246 * scale;  // 82 * 3
-  dog.height = 183 * scale; // 61 * 3
+  dog.width = 246 * scale;
+  dog.height = 183 * scale;
   dog.x = -100 * scale;
   dog.y = getPathY(character.x) - 30 * scale;
 
@@ -917,6 +901,7 @@ function drawCharacter() {
 function showEvent() {
   console.log("Showing tarot cards event");
   eventOverlay.classList.remove("hidden");
+  btnMove.disabled = true;
 
   const cards = document.querySelectorAll('.card');
   cards.forEach(card => {
@@ -929,6 +914,7 @@ function showEvent() {
           eventOverlay.classList.add("hidden");
           cards.forEach(c => c.classList.remove('flipped'));
           buttonPressesRemaining = 5; // After tarot, allow 5 moves
+          btnMove.disabled = false;
         }, 1000);
       }
     });
@@ -942,6 +928,15 @@ function showDogEvent() {
   dog.frameIndex = 0;
   dog.frameHeight = 0;
   dog.count = 0;
+  btnMove.disabled = true;
+
+  // Re-enable button after dog runs off screen
+  const checkDog = setInterval(() => {
+    if (!dog.isRunning) {
+      clearInterval(checkDog);
+      btnMove.disabled = false;
+    }
+  }, 100);
 }
 
 function showCupAndBookEvent() {
@@ -951,6 +946,7 @@ function showCupAndBookEvent() {
   book.hasDrawing = false;
   hand.isVisible = true;
   isEvent3Active = true;
+  btnMove.disabled = true;
 
   btnMove.disabled = true;
   canvas.addEventListener('click', handleCupAndBookClick);
@@ -993,6 +989,8 @@ function handleCupAndBookClick(event) {
 }
 
 function showTreeHugEvent() {
+  btnMove.disabled = true;
+  
   // Create overlay for tree hug
   const overlay = document.createElement('div');
   overlay.id = 'treeHugOverlay';
@@ -1023,6 +1021,7 @@ function showTreeHugEvent() {
 }
 
 function showFinalEvent() {
+  btnMove.disabled = true;
   let gifCount = 0;
   const maxGifs = 3;
 
@@ -1066,9 +1065,11 @@ function showFinalEvent() {
 // ==== EVENT CHECKER & MOVEMENT ====
 
 function moveCharacter() {
+  if (btnMove.disabled) return;
+  
   character.x += character.stepSize;
   character.y = getPathY(character.x);
-
+  
   if (character.x > canvas.width - character.width) {
     showFinalEvent();
     btnMove.disabled = true;
