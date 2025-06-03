@@ -23,7 +23,6 @@ const eventOverlay = document.getElementById("eventOverlay");
 const bgMusic = new Audio('song.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5; // Set to 50% volume
-let musicStarted = false; // Track if music has started
 
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
@@ -429,15 +428,9 @@ function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
 btnMove.addEventListener("touchstart", (e) => {
   e.preventDefault();
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
-    // Start music on first move if not already started
-    if (!musicStarted) {
-      musicStarted = true;
-      const playPromise = bgMusic.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log("Audio playback failed:", error);
-        });
-      }
+    // Start music on first move
+    if (buttonPressesRemaining === 3) {
+      bgMusic.play();
     }
     moveCharacter();
     buttonPressesRemaining--;
@@ -447,15 +440,9 @@ btnMove.addEventListener("touchstart", (e) => {
 
 btnMove.addEventListener("mousedown", () => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
-    // Start music on first move if not already started
-    if (!musicStarted) {
-      musicStarted = true;
-      const playPromise = bgMusic.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.log("Audio playback failed:", error);
-        });
-      }
+    // Start music on first move
+    if (buttonPressesRemaining === 3) {
+      bgMusic.play();
     }
     moveCharacter();
     buttonPressesRemaining--;
