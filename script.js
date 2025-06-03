@@ -22,22 +22,35 @@ const eventOverlay = document.getElementById("eventOverlay");
 // Background music setup
 const bgMusic = new Audio('song.mp3');
 bgMusic.loop = true;
-bgMusic.volume = 0.5; // Set to 50% volume
-bgMusic.preload = 'auto'; // Ensure audio is preloaded
+bgMusic.volume = 0.5;
 
 // Function to start music
 function startMusic() {
-  // Create a new AudioContext
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // Try to play the music
+  const playPromise = bgMusic.play();
   
-  // Resume the audio context
-  audioContext.resume().then(() => {
-    // Play the music
-    bgMusic.play().catch(error => {
+  if (playPromise !== undefined) {
+    playPromise.catch(error => {
       console.log("Audio playback failed:", error);
+      // If autoplay was prevented, add a click listener to the document
+      document.addEventListener('click', function playOnClick() {
+        bgMusic.play().catch(e => console.log("Second attempt failed:", e));
+        document.removeEventListener('click', playOnClick);
+      }, { once: true });
     });
-  });
+  }
 }
+
+// Add click/touch event listener for the entire document to enable audio
+document.addEventListener('click', function enableAudio() {
+  bgMusic.play().catch(e => console.log("Initial play failed:", e));
+  document.removeEventListener('click', enableAudio);
+}, { once: true });
+
+document.addEventListener('touchstart', function enableAudio() {
+  bgMusic.play().catch(e => console.log("Initial play failed:", e));
+  document.removeEventListener('touchstart', enableAudio);
+}, { once: true });
 
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
