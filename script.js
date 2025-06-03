@@ -23,6 +23,21 @@ const eventOverlay = document.getElementById("eventOverlay");
 const bgMusic = new Audio('song.mp3');
 bgMusic.loop = true;
 bgMusic.volume = 0.5; // Set to 50% volume
+bgMusic.preload = 'auto'; // Ensure audio is preloaded
+
+// Function to start music
+function startMusic() {
+  // Create a new AudioContext
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  
+  // Resume the audio context
+  audioContext.resume().then(() => {
+    // Play the music
+    bgMusic.play().catch(error => {
+      console.log("Audio playback failed:", error);
+    });
+  });
+}
 
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
@@ -430,7 +445,7 @@ btnMove.addEventListener("touchstart", (e) => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
     // Start music on first move
     if (buttonPressesRemaining === 3) {
-      bgMusic.play();
+      startMusic();
     }
     moveCharacter();
     buttonPressesRemaining--;
@@ -442,7 +457,7 @@ btnMove.addEventListener("mousedown", () => {
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
     // Start music on first move
     if (buttonPressesRemaining === 3) {
-      bgMusic.play();
+      startMusic();
     }
     moveCharacter();
     buttonPressesRemaining--;
