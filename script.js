@@ -20,23 +20,29 @@ const btnMove = document.getElementById("btnMove"); // Single movement button
 const eventOverlay = document.getElementById("eventOverlay");
 
 // Background music setup
-const backgroundMusic = new Audio('song.mp3');
-backgroundMusic.loop = true;
-backgroundMusic.volume = 0.5; // Set to 50% volume
+const bgMusic = new Audio('song.mp3');
+bgMusic.loop = true;
+bgMusic.volume = 0.5; // Set to 50% volume
 
-// Start background music when user first interacts with the game
+// Function to start background music
 function startBackgroundMusic() {
-  backgroundMusic.play().catch(error => {
-    console.log("Background music playback failed:", error);
-  });
-  // Remove the event listeners after first interaction
-  document.removeEventListener('click', startBackgroundMusic);
-  document.removeEventListener('touchstart', startBackgroundMusic);
+  // Try to play the music
+  const playPromise = bgMusic.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.catch(error => {
+      console.log("Auto-play prevented:", error);
+      // Add click listener to start music on first user interaction
+      document.addEventListener('click', function startMusicOnClick() {
+        bgMusic.play();
+        document.removeEventListener('click', startMusicOnClick);
+      }, { once: true });
+    });
+  }
 }
 
-// Add event listeners for first user interaction
-document.addEventListener('click', startBackgroundMusic);
-document.addEventListener('touchstart', startBackgroundMusic);
+// Start music when the page loads
+window.addEventListener('load', startBackgroundMusic);
 
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
@@ -98,7 +104,7 @@ const dog = {
   y: 0,
   width: 0,
   height: 0,
-  speed: 15,    // Increased from 5 to 15 (3x faster)
+  speed: 18.15,    // Increased from 15 to 16.5 (10% faster)
   isRunning: false,
   frameCount: 10,
   frameRate: 20,
@@ -254,14 +260,14 @@ function getPathY(x) {
 function generateTrees() {
   const treeCount = 200;
   trees = [];
-
+  
   for (let i = 0; i < treeCount; i++) {
     const x = Math.random() * canvas.width;
     const pathY = getPathY(x);
     const maxY = canvas.height; 
     const minDistanceFromPath = 30 * scale;
     const y = pathY + minDistanceFromPath + Math.random() * (maxY - pathY - minDistanceFromPath);
-
+    
     const typeIndex = Math.floor(Math.random() * treeTypes.length);
     const baseType = treeTypes[typeIndex];
 
@@ -567,8 +573,8 @@ function drawPath() {
     ctx.beginPath();
     ctx.moveTo(x, y - (15 * scale));
     ctx.lineTo(x + (10 * scale), y - (5 * scale));
-    ctx.stroke();
-  }
+  ctx.stroke();
+}
 }
 
 function drawTrees() {
@@ -581,7 +587,7 @@ function drawTrees() {
 
     ctx.save();
     ctx.translate(tree.x, tree.y);
-
+    
     // Draw trunk
     ctx.fillStyle = "#8B4513";
     ctx.fillRect(
@@ -590,7 +596,7 @@ function drawTrees() {
       scaledTrunkW,
       scaledTrunkH
     );
-
+    
     // Draw canopy
     ctx.fillStyle = base.color;
     ctx.beginPath();
@@ -599,7 +605,7 @@ function drawTrees() {
     ctx.lineTo(0, -scaledHeight);
     ctx.closePath();
     ctx.fill();
-
+    
     // Some detail lines
     ctx.strokeStyle = "#006400";
     ctx.lineWidth = 1 * scale;
@@ -607,7 +613,7 @@ function drawTrees() {
     ctx.moveTo(-scaledWidth / 4, -scaledHeight / 3);
     ctx.lineTo(scaledWidth / 4, -scaledHeight / 2);
     ctx.stroke();
-
+    
     ctx.restore();
   });
 }
@@ -809,9 +815,9 @@ function drawBook() {
         );
         x = nextX;
       }
-      ctx.stroke();
-    }
-
+    ctx.stroke();
+  }
+  
     // Random dots
     for (let i = 0; i < 15; i++) {
       // Left-page dot
@@ -1055,12 +1061,32 @@ function showTreeHugEvent() {
 function showFinalEvent() {
   btnMove.disabled = true;
   let gifCount = 0;
-  const maxGifs = 3;
+  const maxGifs = 2; // Reduced to 2 since we'll loop the last one infinitely
 
   function showNextGif() {
     if (gifCount >= maxGifs) {
-      console.log("Game completed!");
-      return;
+      // Show the final GIF and keep it looping
+      const overlay = document.createElement('div');
+      overlay.id = 'finalEventOverlay';
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.zIndex = '1000';
+
+      const gif = document.createElement('img');
+      gif.src = 'happy_birthday.gif';
+      gif.style.maxWidth = '80%';
+      gif.style.maxHeight = '80%';
+      overlay.appendChild(gif);
+
+      document.body.appendChild(overlay);
+      return; // Don't set timeout for the final GIF
     }
 
     const overlay = document.createElement('div');
@@ -1074,7 +1100,7 @@ function showFinalEvent() {
     overlay.style.display = 'flex';
     overlay.style.justifyContent = 'center';
     overlay.style.alignItems = 'center';
-    overlay.style.zIndex = '100';
+    overlay.style.zIndex = '1000';
 
     const gif = document.createElement('img');
     gif.src = 'happy_birthday.gif';
@@ -1211,3 +1237,4 @@ let waveOffset4 = 0;
 let waveOffset5 = 0;
 const waveSpeed = 0.05;
 const waveHeight = 8;
+
