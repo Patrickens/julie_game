@@ -1,8 +1,8 @@
 // ==== script.js ====
 
 /*
-  We choose a "base" resolution of 1920×1080 (16:9). 
-  After we compute the actual canvas size (which is also kept at 16:9), 
+  We choose a "base" resolution of 1920×1080 (16:9).
+  After we compute the actual canvas size (which is also kept at 16:9),
   we set:
       scale = (canvas.width / BASE_WIDTH)
   and then multiply every hard-coded dimension by that same scale.
@@ -26,31 +26,14 @@ bgMusic.volume = 0.5;
 
 // Function to start music
 function startMusic() {
-  // Try to play the music
   const playPromise = bgMusic.play();
-  
   if (playPromise !== undefined) {
     playPromise.catch(error => {
       console.log("Audio playback failed:", error);
-      // If autoplay was prevented, add a click listener to the document
-      document.addEventListener('click', function playOnClick() {
-        bgMusic.play().catch(e => console.log("Second attempt failed:", e));
-        document.removeEventListener('click', playOnClick);
-      }, { once: true });
+      // If playback is blocked for some reason, it can be retried on next user interaction.
     });
   }
 }
-
-// Add click/touch event listener for the entire document to enable audio
-document.addEventListener('click', function enableAudio() {
-  bgMusic.play().catch(e => console.log("Initial play failed:", e));
-  document.removeEventListener('click', enableAudio);
-}, { once: true });
-
-document.addEventListener('touchstart', function enableAudio() {
-  bgMusic.play().catch(e => console.log("Initial play failed:", e));
-  document.removeEventListener('touchstart', enableAudio);
-}, { once: true });
 
 // Ensure overlay is hidden at startup
 eventOverlay.classList.add("hidden");
@@ -112,7 +95,7 @@ const dog = {
   y: 0,
   width: 0,
   height: 0,
-  speed: 18.15,    // Increased from 15 to 16.5 (10% faster)
+  speed: 18.15,    // Increased from 15 to 18.15 (10% faster)
   isRunning: false,
   frameCount: 10,
   frameRate: 20,
@@ -256,9 +239,6 @@ resizeCanvas();
 
 // ==== PATH & SCENE HELPERS ====
 
-// Update the wave frequency to be relative to screen width
-const waveFrequency = 0.015 * (1920 / window.innerWidth); // Adjust frequency based on screen width
-
 function getPathY(x) {
   // Winding path via sine wave, adjusted for screen width
   const frequency = 0.005 * (1920 / window.innerWidth); // Adjust frequency based on screen width
@@ -268,14 +248,14 @@ function getPathY(x) {
 function generateTrees() {
   const treeCount = 200;
   trees = [];
-  
+
   for (let i = 0; i < treeCount; i++) {
     const x = Math.random() * canvas.width;
     const pathY = getPathY(x);
-    const maxY = canvas.height; 
+    const maxY = canvas.height;
     const minDistanceFromPath = 30 * scale;
     const y = pathY + minDistanceFromPath + Math.random() * (maxY - pathY - minDistanceFromPath);
-    
+
     const typeIndex = Math.floor(Math.random() * treeTypes.length);
     const baseType = treeTypes[typeIndex];
 
@@ -307,7 +287,7 @@ function generateShrubs() {
 function resetEventSpots() {
   eventSpots = [];
 
-  // We use "base" pixel distances (350, 500, etc.) but multiply by scale:
+  // We use "base" pixel distances (350, 350, etc.) but multiply by scale:
   const startX = canvas.width * 0.05;
   // 1st event ~ 350 pixels from the start point (scaled):
   const event1X = startX + 350 * scale;
@@ -319,7 +299,7 @@ function resetEventSpots() {
     message: "You've reached event #1!"
   });
 
-  // 2nd event is +500 base px (scaled):
+  // 2nd event is +350 base px (scaled):
   const event2X = event1X + 350 * scale;
   const event2Y = getPathY(event2X);
   eventSpots.push({
@@ -356,10 +336,10 @@ function generateSparkles() {
   sparkles.length = 0;
   for (let i = 0; i < 10; i++) {
     sparkles.push({
-      x: Math.random() * 100 - 50,  // Random position around character
+      x: Math.random() * 100 - 50,    // Random position around character
       y: Math.random() * 100 - 50,
-      size: 2 * scale,              // Start small
-      maxSize: 8 * scale,           // Maximum size before burst
+      size: 2 * scale,                // Start small
+      maxSize: 8 * scale,             // Maximum size before burst
       color: "rgba(255, 192, 203, 0.8)", // Pink
       burstColor: "rgba(255, 255, 0, 0.8)", // Yellow
       growthRate: 0.1 + Math.random() * 0.2,
@@ -402,13 +382,13 @@ function drawSparkles() {
     if (!s.isBursting) {
       // Draw growing star
       ctx.fillStyle = s.color;
-      drawStar(0, 0, s.size, s.size * 0.5, 5);
+      drawStar(0, 0, 5, s.size, s.size * 0.5);
     } else {
-      // Draw bursting star - three times smaller
+      // Draw bursting star
       const burstSize = (s.size / 3) * (1 + s.burstProgress);
       ctx.fillStyle = s.burstColor;
-      drawStar(0, 0, burstSize, burstSize * 0.5, 5);
-      // Add burst rays - also three times smaller
+      drawStar(0, 0, 5, burstSize, burstSize * 0.5);
+      // Add burst rays
       ctx.strokeStyle = s.burstColor;
       ctx.lineWidth = 2 * scale;
       for (let i = 0; i < 8; i++) {
@@ -451,30 +431,17 @@ function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
   ctx.fill();
 }
 
-// ==== INPUT HANDLERS ====
-
-btnMove.addEventListener("touchstart", (e) => {
+// ==== INPUT HANDLER: SINGLE click ON btnMove TO MOVE + START MUSIC ====
+btnMove.addEventListener("click", (e) => {
   e.preventDefault();
   if (buttonPressesRemaining > 0 && !isEvent3Active) {
-    // Start music on first move
+    // On first move, unlock and start background music
     if (buttonPressesRemaining === 3) {
       startMusic();
     }
     moveCharacter();
     buttonPressesRemaining--;
-    console.log("Touch start - Presses remaining:", buttonPressesRemaining);
-  }
-});
-
-btnMove.addEventListener("mousedown", () => {
-  if (buttonPressesRemaining > 0 && !isEvent3Active) {
-    // Start music on first move
-    if (buttonPressesRemaining === 3) {
-      startMusic();
-    }
-    moveCharacter();
-    buttonPressesRemaining--;
-    console.log("Mouse down - Presses remaining:", buttonPressesRemaining);
+    console.log("Click – Presses remaining:", buttonPressesRemaining);
   }
 });
 
@@ -491,13 +458,13 @@ function drawRiver() {
   ctx.moveTo(0, 0);
   ctx.lineTo(canvas.width, 0);
   ctx.lineTo(canvas.width, canvas.height);
-  
+
   // Curved bottom following path
   for (let x = canvas.width; x >= 0; x -= 5) {
     const y = getPathY(x);
     ctx.lineTo(x, y);
   }
-  
+
   ctx.closePath();
   ctx.fill();
 
@@ -510,14 +477,14 @@ function drawRiver() {
     ctx.strokeStyle = waveColors[i];
     ctx.lineWidth = 2 * scale;
     ctx.beginPath();
-    
+
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
       const waterHeight = pathY;
       const waveY = waterHeight * waveHeights[i];
-      const adjustedFrequency = waveFrequency * (1920 / window.innerWidth);
-      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (waveHeight * scale);
-      
+      const adjustedFrequency = 0.015 * (1920 / window.innerWidth);
+      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (8 * scale);
+
       if (x === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -532,9 +499,9 @@ function drawRiver() {
     for (let x = 0; x < canvas.width; x += 5) {
       const pathY = getPathY(x);
       const waveY = pathY * waveHeights[i];
-      const adjustedFrequency = waveFrequency * (1920 / window.innerWidth);
-      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (waveHeight * scale);
-      
+      const adjustedFrequency = 0.015 * (1920 / window.innerWidth);
+      const y = waveY + Math.sin(x * adjustedFrequency + waveOffsets[i]) * (8 * scale);
+
       if (x === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -546,7 +513,7 @@ function drawRiver() {
     ctx.closePath();
     ctx.fill();
   }
-  
+
   // Update wave offsets for animation
   waveOffset1 += waveSpeed;
   waveOffset2 += waveSpeed * 1.2;
@@ -590,8 +557,8 @@ function drawPath() {
     ctx.beginPath();
     ctx.moveTo(x, y - (15 * scale));
     ctx.lineTo(x + (10 * scale), y - (5 * scale));
-  ctx.stroke();
-}
+    ctx.stroke();
+  }
 }
 
 function drawTrees() {
@@ -604,7 +571,7 @@ function drawTrees() {
 
     ctx.save();
     ctx.translate(tree.x, tree.y);
-    
+
     // Draw trunk
     ctx.fillStyle = "#8B4513";
     ctx.fillRect(
@@ -613,7 +580,7 @@ function drawTrees() {
       scaledTrunkW,
       scaledTrunkH
     );
-    
+
     // Draw canopy
     ctx.fillStyle = base.color;
     ctx.beginPath();
@@ -622,7 +589,7 @@ function drawTrees() {
     ctx.lineTo(0, -scaledHeight);
     ctx.closePath();
     ctx.fill();
-    
+
     // Some detail lines
     ctx.strokeStyle = "#006400";
     ctx.lineWidth = 1 * scale;
@@ -630,7 +597,7 @@ function drawTrees() {
     ctx.moveTo(-scaledWidth / 4, -scaledHeight / 3);
     ctx.lineTo(scaledWidth / 4, -scaledHeight / 2);
     ctx.stroke();
-    
+
     ctx.restore();
   });
 }
@@ -832,9 +799,9 @@ function drawBook() {
         );
         x = nextX;
       }
-    ctx.stroke();
-  }
-  
+      ctx.stroke();
+    }
+
     // Random dots
     for (let i = 0; i < 15; i++) {
       // Left-page dot
@@ -902,7 +869,7 @@ function drawHand() {
   ctx.lineTo(105 * scale, 6 * scale);
   ctx.closePath();
   ctx.fill();
-  
+
   ctx.restore();
 }
 
@@ -929,20 +896,6 @@ function drawDog() {
     dog.x, dog.y,
     dog.width, dog.height
   );
-}
-
-function drawCharacter() {
-  ctx.save();
-  ctx.translate(character.x, character.y);
-  ctx.drawImage(
-    characterImage,
-    -character.width / 2,
-    -character.height / 2,
-    character.width,
-    character.height
-  );
-  ctx.restore();
-  drawSparkles();
 }
 
 // ==== EVENT LOGIC ====
@@ -1003,7 +956,6 @@ function showCupAndBookEvent() {
   isEvent3Active = true;
   btnMove.disabled = true;
 
-  btnMove.disabled = true;
   canvas.addEventListener('click', handleCupAndBookClick);
 }
 
@@ -1045,7 +997,7 @@ function handleCupAndBookClick(event) {
 
 function showTreeHugEvent() {
   btnMove.disabled = true;
-  
+
   // Create overlay for tree hug
   const overlay = document.createElement('div');
   overlay.id = 'treeHugOverlay';
@@ -1141,10 +1093,10 @@ function showFinalEvent() {
 
 function moveCharacter() {
   if (btnMove.disabled) return;
-  
+
   character.x += character.stepSize;
   character.y = getPathY(character.x);
-  
+
   if (character.x > canvas.width - character.width) {
     showFinalEvent();
     btnMove.disabled = true;
@@ -1254,4 +1206,3 @@ let waveOffset4 = 0;
 let waveOffset5 = 0;
 const waveSpeed = 0.05;
 const waveHeight = 8;
-
